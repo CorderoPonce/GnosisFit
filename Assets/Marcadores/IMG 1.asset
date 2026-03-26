@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848409ee8ba454f42a5ddff137688a27, type: 3}
+  m_Name: IMG 1
+  m_EditorClassIdentifier: Unity.XR.ARSubsystems::UnityEngine.XR.ARSubsystems.XRReferenceImageLibrary
+  m_GuidLow: 5686380717845079328
+  m_GuidHigh: 10359741951470478757
+  m_DataStore:
+    m_Storage: []
+  m_Images:
+  - m_SerializedGuid:
+      m_GuidLow: 5084911099308842308
+      m_GuidHigh: 17666873845636541832
+    m_SerializedTextureGuid:
+      m_GuidLow: 6045142194485762772
+      m_GuidHigh: 2453282996126025561
+    m_Size: {x: 0.05, y: 0.057096478}
+    m_SpecifySize: 1
+    m_Name: simbolo
+    m_Texture: {fileID: 2800000, guid: 1f0c9ad4a8cc53e45907990de3cf0b22, type: 3}
+  - m_SerializedGuid:
+      m_GuidLow: 5572204323563420442
+      m_GuidHigh: 3401553629435256712
+    m_SerializedTextureGuid:
+      m_GuidLow: 14048104256810751216
+      m_GuidHigh: 6889612660262749993
+    m_Size: {x: 0.085, y: 0.05587963}
+    m_SpecifySize: 1
+    m_Name: Manilla
+    m_Texture: {fileID: 2800000, guid: 3adb94f0e464c2f429c7fe3636d29c5f, type: 3}
+  - m_SerializedGuid:
+      m_GuidLow: 5184586828365442188
+      m_GuidHigh: 968720027617901753
+    m_SerializedTextureGuid:
+      m_GuidLow: 6441317702516499223
+      m_GuidHigh: 2299542589266183899
+    m_Size: {x: 0.03, y: 0.03312992}
+    m_SpecifySize: 1
+    m_Name: simbolo2
+    m_Texture: {fileID: 2800000, guid: a7ee631728525964dbc6172bcd9de91f, type: 3}
