@@ -22,35 +22,35 @@ public class PlaceExample : MonoBehaviour
 
     void Update()
     {
-        // Chivato 1: ¿Unity reconoce que hay dedos en la pantalla?
         if (Input.touchCount > 0)
         {
-            Debug.Log("ASISTENTE DEPORTIVO: ¡Pantalla tocada! Dedos detectados: " + Input.touchCount);
             Touch toque = Input.GetTouch(0);
 
             if (toque.phase == TouchPhase.Began)
             {
-                Debug.Log("ASISTENTE DEPORTIVO: Fase 'Began' detectada en la posición: " + toque.position);
-
                 if (raycastManager.Raycast(toque.position, impactos, TrackableType.PlaneWithinPolygon))
                 {
-                    Debug.Log("ASISTENTE DEPORTIVO: ¡Raycast chocó con un plano AR!");
                     Pose poseChoque = impactos[0].pose;
 
                     if (modeloInstanciado == null)
                     {
-                        Debug.Log("ASISTENTE DEPORTIVO: Instanciando cápsula por primera vez.");
                         modeloInstanciado = Instantiate(modeloPrefab, poseChoque.position, poseChoque.rotation);
                     }
                     else
                     {
-                        Debug.Log("ASISTENTE DEPORTIVO: Moviendo cápsula existente.");
                         modeloInstanciado.transform.position = poseChoque.position;
                     }
-                }
-                else
-                {
-                    Debug.Log("ASISTENTE DEPORTIVO: El raycast se disparó, pero no tocó la malla amarilla.");
+
+                    // --- NUEVAS LÍNEAS PARA QUE TE MIRE ---
+                    // 1. Obtenemos la posición de la cámara de tu celular
+                    Vector3 posicionCamara = Camera.main.transform.position;
+                    
+                    // 2. Bloqueamos la altura (Y) para que el modelo no se incline hacia arriba o abajo si tienes el celular alto
+                    posicionCamara.y = modeloInstanciado.transform.position.y; 
+                    
+                    // 3. Le decimos al modelo que mire hacia esa posición
+                    modeloInstanciado.transform.LookAt(posicionCamara);
+                    // --------------------------------------
                 }
             }
         }

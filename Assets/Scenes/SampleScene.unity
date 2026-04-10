@@ -592,7 +592,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9bdadb8661d8334fa440d69fbc69a94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ColocarEntrenador
-  modeloPrefab: {fileID: 7988006995340501932, guid: 31683057330a80945a39716d4c261a84, type: 3}
+  modeloPrefab: {fileID: 4660484397568738115, guid: 8c6935f8f65a6f14b9dec8ebaec1e830, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
