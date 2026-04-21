@@ -2,23 +2,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-using UnityEngine.EventSystems; // NUEVO: Necesario para detectar la UI
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(ARRaycastManager))]
 public class PlaceExample : MonoBehaviour
 {
-    [Header("Tus modelos 3D (Ej: 0=Flexión, 1=Sentadilla)")]
-    // Cambiamos a un Array (lista) de GameObjects
-    public GameObject[] modelosPrefabs; 
+    [Header("1. Lista de Personajes (Ej: Mark, X-Bot)")]
+    public GameObject[] avataresPrefabs; 
+
+    [Header("2. Lista de Ejercicios (Archivos .controller)")]
+    public RuntimeAnimatorController[] ejerciciosControllers;
 
     private GameObject modeloInstanciado;
     private ARRaycastManager raycastManager;
     private static List<ARRaycastHit> impactos = new List<ARRaycastHit>();
     
-    // Rastrea qué ejercicio está seleccionado en el menú
-    private int indiceSeleccionado = 0; 
+    // Rastrean el estado actual elegido por el usuario en ambos menús
+    private int indicePersonajeActual = 0; 
+    private int indiceEjercicioActual = 0; 
     
-    // NUEVO: Almacena la velocidad deseada elegida en el menú de velocidad
+    // Almacena la velocidad deseada elegida en el menú
     private float velocidadActual = 1.0f;
 
     void Awake()
@@ -32,7 +35,7 @@ public class PlaceExample : MonoBehaviour
         {
             Touch toque = Input.GetTouch(0);
 
-            // NUEVO: ¡El escudo antibugs! Si el dedo está sobre la UI, ignoramos el toque para el mundo 3D
+            // Escudo anti-clicks fantasma en la UI
             if (FallaSeguraTocoUI(toque.position))
             {
                 return; 
@@ -46,8 +49,10 @@ public class PlaceExample : MonoBehaviour
 
                     if (modeloInstanciado == null)
                     {
-                        // Instanciamos el modelo basado en el índice seleccionado
-                        modeloInstanciado = Instantiate(modelosPrefabs[indiceSeleccionado], poseChoque.position, poseChoque.rotation);
+                        // Instanciamos el muñeco físico
+                        modeloInstanciado = Instantiate(avataresPrefabs[indicePersonajeActual], poseChoque.position, poseChoque.rotation);
+                        // Inmediatamente le descargamos la animación correcta al cerebro
+                        ActualizarCerebroDelModelo();
                     }
                     else
                     {
@@ -62,72 +67,79 @@ public class PlaceExample : MonoBehaviour
         }
     }
 
-    // NUEVO: Función para cambiar modelos ignorando el "Título"
-    public void CambiarModelo(int nuevoIndice)
+    // NUEVO: Método Maestro para inyectar la animación y velocidad al muñeco actual
+    private void ActualizarCerebroDelModelo()
     {
-        // Si el usuario toca el Título del menú (Opción 0), ignoramos la acción
-        if (nuevoIndice == 0) return; 
+        if (modeloInstanciado != null)
+        {
+            Animator animator = modeloInstanciado.GetComponent<Animator>();
+            if (animator != null && ejerciciosControllers.Length > 0)
+            {
+                // Inyectamos el archivo .controller que el usuario haya seleccionado del Dropdown 2
+                animator.runtimeAnimatorController = ejerciciosControllers[indiceEjercicioActual];
+                animator.speed = velocidadActual;
+            }
+        }
+    }
 
-        // Le restamos 1 porque tu Opción 1 del menú ahora carga el Prefab número 0
-        indiceSeleccionado = nuevoIndice - 1;
+    // LLAMADO POR DROPDOWN 1: CAMBIAR PERSONAJE
+    public void CambiarPersonaje(int nuevoIndice)
+    {
+        if (nuevoIndice == 0) return; // Ignoramos el Título del Menu
+        indicePersonajeActual = nuevoIndice - 1;
 
-
-        // Si ya hay un modelo haciendo ejercicio en el piso, lo borramos y ponemos el nuevo en su mismo lugar
         if (modeloInstanciado != null)
         {
             Vector3 posicionActual = modeloInstanciado.transform.position;
             Quaternion rotacionActual = modeloInstanciado.transform.rotation;
             
-            Destroy(modeloInstanciado); // Borra el viejo
+            // Destruimos la "Carne" del muñeco viejo
+            Destroy(modeloInstanciado); 
+            // Instanciamos la "Carne" del muñeco nuevo
+            modeloInstanciado = Instantiate(avataresPrefabs[indicePersonajeActual], posicionActual, rotacionActual);
             
-            // Crea el nuevo
-            modeloInstanciado = Instantiate(modelosPrefabs[indiceSeleccionado], posicionActual, rotacionActual);
-            
-            // Hacemos que nos mire inmediatamente
             Vector3 posicionCamara = Camera.main.transform.position;
             posicionCamara.y = modeloInstanciado.transform.position.y;
             modeloInstanciado.transform.LookAt(posicionCamara);
+            
+            // Hacemos que el muñeco nuevo retome mágicamente el ejercicio que estaba haciendo el viejo
+            ActualizarCerebroDelModelo();
         }
     }
 
-    // NUEVO: Función para Pausar/Reanudar animación interactuando con la interfaz
+    // LLAMADO POR DROPDOWN 2: CAMBIAR EJERCICIO
+    public void CambiarEjercicio(int nuevoIndice)
+    {
+        if (nuevoIndice == 0) return; // Ignoramos el Título del Menu
+        indiceEjercicioActual = nuevoIndice - 1;
+
+        // Solo cambiamos el "alma/cerebro", por ende NO destruimos al muñeco
+        ActualizarCerebroDelModelo();
+    }
+
+    // LLAMADO POR BOTÓN: PAUSA/PLAY
     public void AlternarPausaAnimacion()
     {
-        // Revisamos que haya un mono creado y pisando el tablero primeramente
         if (modeloInstanciado != null)
         {
-            // Atrapamos su cerebro (Animator)
             Animator animator = modeloInstanciado.GetComponent<Animator>();
-            
             if (animator != null)
             {
-                // Si se está moviendo (velocidad > 0), lo congelamos (0f)
-                if (animator.speed > 0f)
-                {
-                    animator.speed = 0f; 
-                }
-                // Si ya estaba en pausa, lo regresamos a su velocidad asignada actual
-                else
-                {
-                    animator.speed = velocidadActual; 
-                }
+                if (animator.speed > 0f) animator.speed = 0f; 
+                else animator.speed = velocidadActual; 
             }
         }
     }
 
-    // NUEVO: Función para cambiar la velocidad desde un Menú Desplegable (Dropdown)
+    // LLAMADO POR DROPDOWN 3: CÁMARA LENTA
     public void CambiarVelocidadAnimacion(int indiceOpcion)
     {
-        // Si toca el Título "Velocidades" (Opción 0), lo ignoramos
         if (indiceOpcion == 0) return;
 
-        // Configuramos la tabla de velocidades pero rodada un espacio
-        // (1 = x1 | 2 = x0.75 | 3 = x0.5)
         if (indiceOpcion == 1) velocidadActual = 1.0f;
         else if (indiceOpcion == 2) velocidadActual = 0.75f;
         else if (indiceOpcion == 3) velocidadActual = 0.5f;
 
-        // Si hay un mono en el piso y NO estaba pausado, le inyectamos la nueva velocidad de inmediato
         if (modeloInstanciado != null)
         {
             Animator animator = modeloInstanciado.GetComponent<Animator>();
@@ -138,17 +150,14 @@ public class PlaceExample : MonoBehaviour
         }
     }
 
-    // NUEVO: Extractor de Colisión UI (Infalible para pantallas táctiles Android/iOS en AR)
+    // ESCUDO ANDROID
     private bool FallaSeguraTocoUI(Vector2 posicionTacto)
     {
         if (EventSystem.current == null) return false;
-        
         PointerEventData eventData = new PointerEventData(EventSystem.current);
         eventData.position = posicionTacto;
-        
         List<RaycastResult> resultados = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, resultados);
-        
         return resultados.Count > 0;
     }
 }
