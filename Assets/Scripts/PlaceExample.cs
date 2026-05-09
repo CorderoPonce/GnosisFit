@@ -2,21 +2,27 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-using UnityEngine.EventSystems; // NUEVO: Necesario para detectar la UI
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(ARRaycastManager))]
 public class PlaceExample : MonoBehaviour
 {
-    [Header("Tus modelos 3D (Ej: 0=Flexión, 1=Sentadilla)")]
-    // Cambiamos a un Array (lista) de GameObjects
-    public GameObject[] modelosPrefabs; 
+    [Header("1. Lista de Personajes (Ej: Mark, X-Bot)")]
+    public GameObject[] avataresPrefabs; 
+
+    [Header("2. Lista de Ejercicios (Archivos .controller)")]
+    public RuntimeAnimatorController[] ejerciciosControllers;
 
     private GameObject modeloInstanciado;
     private ARRaycastManager raycastManager;
     private static List<ARRaycastHit> impactos = new List<ARRaycastHit>();
     
-    // Rastrea qué ejercicio está seleccionado en el menú
-    private int indiceSeleccionado = 0; 
+    // Rastrean el estado actual elegido por el usuario en ambos menús
+    private int indicePersonajeActual = 0; 
+    private int indiceEjercicioActual = 0; 
+    
+    // Almacena la velocidad deseada elegida en el menú
+    private float velocidadActual = 1.0f;
 
     void Awake()
     {
@@ -29,8 +35,8 @@ public class PlaceExample : MonoBehaviour
         {
             Touch toque = Input.GetTouch(0);
 
-            // NUEVO: ¡El escudo antibugs! Si el dedo está sobre la UI, ignoramos el toque para el mundo 3D
-            if (EventSystem.current.IsPointerOverGameObject(toque.fingerId))
+            // Escudo anti-clicks fantasma en la UI
+            if (FallaSeguraTocoUI(toque.position))
             {
                 return; 
             }
@@ -43,8 +49,10 @@ public class PlaceExample : MonoBehaviour
 
                     if (modeloInstanciado == null)
                     {
-                        // Instanciamos el modelo basado en el índice seleccionado
-                        modeloInstanciado = Instantiate(modelosPrefabs[indiceSeleccionado], poseChoque.position, poseChoque.rotation);
+                        // Instanciamos el muñeco físico
+                        modeloInstanciado = Instantiate(avataresPrefabs[indicePersonajeActual], poseChoque.position, poseChoque.rotation);
+                        // Inmediatamente le descargamos la animación correcta al cerebro
+                        ActualizarCerebroDelModelo();
                     }
                     else
                     {
@@ -59,26 +67,97 @@ public class PlaceExample : MonoBehaviour
         }
     }
 
-    // NUEVO: Esta función será llamada por tu Dropdown de la UI
-    public void CambiarModelo(int nuevoIndice)
+    // NUEVO: Método Maestro para inyectar la animación y velocidad al muñeco actual
+    private void ActualizarCerebroDelModelo()
     {
-        indiceSeleccionado = nuevoIndice;
+        if (modeloInstanciado != null)
+        {
+            Animator animator = modeloInstanciado.GetComponent<Animator>();
+            if (animator != null && ejerciciosControllers.Length > 0)
+            {
+                // Inyectamos el archivo .controller que el usuario haya seleccionado del Dropdown 2
+                animator.runtimeAnimatorController = ejerciciosControllers[indiceEjercicioActual];
+                animator.speed = velocidadActual;
+            }
+        }
+    }
 
-        // Si ya hay un modelo haciendo ejercicio en el piso, lo borramos y ponemos el nuevo en su mismo lugar
+    // LLAMADO POR DROPDOWN 1: CAMBIAR PERSONAJE
+    public void CambiarPersonaje(int nuevoIndice)
+    {
+        if (nuevoIndice == 0) return; // Ignoramos el Título del Menu
+        indicePersonajeActual = nuevoIndice - 1;
+
         if (modeloInstanciado != null)
         {
             Vector3 posicionActual = modeloInstanciado.transform.position;
             Quaternion rotacionActual = modeloInstanciado.transform.rotation;
             
-            Destroy(modeloInstanciado); // Borra el viejo
+            // Destruimos la "Carne" del muñeco viejo
+            Destroy(modeloInstanciado); 
+            // Instanciamos la "Carne" del muñeco nuevo
+            modeloInstanciado = Instantiate(avataresPrefabs[indicePersonajeActual], posicionActual, rotacionActual);
             
-            // Crea el nuevo
-            modeloInstanciado = Instantiate(modelosPrefabs[indiceSeleccionado], posicionActual, rotacionActual);
-            
-            // Hacemos que nos mire inmediatamente
             Vector3 posicionCamara = Camera.main.transform.position;
             posicionCamara.y = modeloInstanciado.transform.position.y;
             modeloInstanciado.transform.LookAt(posicionCamara);
+            
+            // Hacemos que el muñeco nuevo retome mágicamente el ejercicio que estaba haciendo el viejo
+            ActualizarCerebroDelModelo();
         }
+    }
+
+    // LLAMADO POR DROPDOWN 2: CAMBIAR EJERCICIO
+    public void CambiarEjercicio(int nuevoIndice)
+    {
+        if (nuevoIndice == 0) return; // Ignoramos el Título del Menu
+        indiceEjercicioActual = nuevoIndice - 1;
+
+        // Solo cambiamos el "alma/cerebro", por ende NO destruimos al muñeco
+        ActualizarCerebroDelModelo();
+    }
+
+    // LLAMADO POR BOTÓN: PAUSA/PLAY
+    public void AlternarPausaAnimacion()
+    {
+        if (modeloInstanciado != null)
+        {
+            Animator animator = modeloInstanciado.GetComponent<Animator>();
+            if (animator != null)
+            {
+                if (animator.speed > 0f) animator.speed = 0f; 
+                else animator.speed = velocidadActual; 
+            }
+        }
+    }
+
+    // LLAMADO POR DROPDOWN 3: CÁMARA LENTA
+    public void CambiarVelocidadAnimacion(int indiceOpcion)
+    {
+        if (indiceOpcion == 0) return;
+
+        if (indiceOpcion == 1) velocidadActual = 1.0f;
+        else if (indiceOpcion == 2) velocidadActual = 0.75f;
+        else if (indiceOpcion == 3) velocidadActual = 0.5f;
+
+        if (modeloInstanciado != null)
+        {
+            Animator animator = modeloInstanciado.GetComponent<Animator>();
+            if (animator != null && animator.speed > 0f)
+            {
+                animator.speed = velocidadActual;
+            }
+        }
+    }
+
+    // ESCUDO ANDROID
+    private bool FallaSeguraTocoUI(Vector2 posicionTacto)
+    {
+        if (EventSystem.current == null) return false;
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = posicionTacto;
+        List<RaycastResult> resultados = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, resultados);
+        return resultados.Count > 0;
     }
 }
