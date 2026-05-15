@@ -30,6 +30,16 @@ extern void U3CPeticionOllamaU3Ed__11_System_Collections_IEnumerator_Reset_m898D
 extern void U3CPeticionOllamaU3Ed__11_System_Collections_IEnumerator_get_Current_m97FBEB8FC65788B1C35414939CFDDBF497F90C75 (void);
 extern void OllamaRequest__ctor_m10EF3E9EDA66159705AE45EDCB4F59722E35320E (void);
 extern void OllamaResponse__ctor_m26F7308F5A920F4E5E74743072B0ADC9842C0C2E (void);
+extern void GestorModoSupervision_AlternarModoSupervision_mEA580FFD5ED0BAD25BAB75DF8E696F9F47562257 (void);
+extern void GestorModoSupervision_ReiniciarCamaraAR_mD6C231E665BD01E222B9841AC96CE94D0A3A01D4 (void);
+extern void GestorModoSupervision_GenerarClonPIP_mF14155D7A753F343811E6E0835948C7483DEB2A4 (void);
+extern void GestorModoSupervision__ctor_mB2C08550FCD610943D05773FE5A68371D7073A55 (void);
+extern void U3CReiniciarCamaraARU3Ed__7__ctor_mA40634E9B873E186CAD9A63AC00FBFB55B79C45F (void);
+extern void U3CReiniciarCamaraARU3Ed__7_System_IDisposable_Dispose_m95EB7A94C32111085DD958166DA8E1394FCB2646 (void);
+extern void U3CReiniciarCamaraARU3Ed__7_MoveNext_mA47088DBB10DD9DF8EF9E619F9E284EA224AD727 (void);
+extern void U3CReiniciarCamaraARU3Ed__7_System_Collections_Generic_IEnumeratorU3CSystem_ObjectU3E_get_Current_m1C26FBF01EF5BB8F067ECA7DC593A08A47E3F5F0 (void);
+extern void U3CReiniciarCamaraARU3Ed__7_System_Collections_IEnumerator_Reset_mAA4F1D9C06645B2C99489CD3B3F617029918E321 (void);
+extern void U3CReiniciarCamaraARU3Ed__7_System_Collections_IEnumerator_get_Current_m5BED2763AF1E7166A6914AE8FB84178612297E02 (void);
 extern void PlaceExample_Awake_mA3EF6BB397BF1D27AADBAB3A9FB001B3BEB0D69C (void);
 extern void PlaceExample_Update_m0BEA8255AD964BAF9EFACE03D0453347E97ABEDC (void);
 extern void PlaceExample_ActualizarCerebroDelModelo_m9F994CE4DB7B32995AF56BBD3A99F3B98A8560CE (void);
@@ -308,7 +318,7 @@ extern void U3CWarpTextU3Ed__8_System_Collections_Generic_IEnumeratorU3CSystem_O
 extern void U3CWarpTextU3Ed__8_System_Collections_IEnumerator_Reset_m07746C332D2D8CE5DEA59873C26F2FAD4B369B42 (void);
 extern void U3CWarpTextU3Ed__8_System_Collections_IEnumerator_get_Current_m71D7F84D9DEF63BEC6B44866515DDCF35B142A19 (void);
 extern void U3CPrivateImplementationDetailsU3E_ComputeStringHash_m6EA1F233618497AEFF8902A5EDFA24C74E2F2876 (void);
-static Il2CppMethodPointer s_methodPointers[301] = 
+static Il2CppMethodPointer s_methodPointers[311] = 
 {
 	EnlacesChat_Awake_mF1637096D553982F1F5101C3D65EE6AAD79FD50F,
 	EnlacesChat_OnPointerClick_mB3492BA5D39D6F501BEAB1D317A9904ED10FA6D7,
@@ -333,6 +343,16 @@ static Il2CppMethodPointer s_methodPointers[301] =
 	U3CPeticionOllamaU3Ed__11_System_Collections_IEnumerator_get_Current_m97FBEB8FC65788B1C35414939CFDDBF497F90C75,
 	OllamaRequest__ctor_m10EF3E9EDA66159705AE45EDCB4F59722E35320E,
 	OllamaResponse__ctor_m26F7308F5A920F4E5E74743072B0ADC9842C0C2E,
+	GestorModoSupervision_AlternarModoSupervision_mEA580FFD5ED0BAD25BAB75DF8E696F9F47562257,
+	GestorModoSupervision_ReiniciarCamaraAR_mD6C231E665BD01E222B9841AC96CE94D0A3A01D4,
+	GestorModoSupervision_GenerarClonPIP_mF14155D7A753F343811E6E0835948C7483DEB2A4,
+	GestorModoSupervision__ctor_mB2C08550FCD610943D05773FE5A68371D7073A55,
+	U3CReiniciarCamaraARU3Ed__7__ctor_mA40634E9B873E186CAD9A63AC00FBFB55B79C45F,
+	U3CReiniciarCamaraARU3Ed__7_System_IDisposable_Dispose_m95EB7A94C32111085DD958166DA8E1394FCB2646,
+	U3CReiniciarCamaraARU3Ed__7_MoveNext_mA47088DBB10DD9DF8EF9E619F9E284EA224AD727,
+	U3CReiniciarCamaraARU3Ed__7_System_Collections_Generic_IEnumeratorU3CSystem_ObjectU3E_get_Current_m1C26FBF01EF5BB8F067ECA7DC593A08A47E3F5F0,
+	U3CReiniciarCamaraARU3Ed__7_System_Collections_IEnumerator_Reset_mAA4F1D9C06645B2C99489CD3B3F617029918E321,
+	U3CReiniciarCamaraARU3Ed__7_System_Collections_IEnumerator_get_Current_m5BED2763AF1E7166A6914AE8FB84178612297E02,
 	PlaceExample_Awake_mA3EF6BB397BF1D27AADBAB3A9FB001B3BEB0D69C,
 	PlaceExample_Update_m0BEA8255AD964BAF9EFACE03D0453347E97ABEDC,
 	PlaceExample_ActualizarCerebroDelModelo_m9F994CE4DB7B32995AF56BBD3A99F3B98A8560CE,
@@ -612,7 +632,7 @@ static Il2CppMethodPointer s_methodPointers[301] =
 	U3CWarpTextU3Ed__8_System_Collections_IEnumerator_get_Current_m71D7F84D9DEF63BEC6B44866515DDCF35B142A19,
 	U3CPrivateImplementationDetailsU3E_ComputeStringHash_m6EA1F233618497AEFF8902A5EDFA24C74E2F2876,
 };
-static const int32_t s_InvokerIndices[301] = 
+static const int32_t s_InvokerIndices[311] = 
 {
 	17765,
 	13493,
@@ -637,6 +657,16 @@ static const int32_t s_InvokerIndices[301] =
 	17537,
 	17765,
 	17765,
+	17765,
+	11538,
+	17765,
+	17765,
+	13420,
+	17765,
+	17322,
+	17537,
+	17765,
+	17537,
 	17765,
 	17765,
 	17765,
@@ -920,7 +950,7 @@ IL2CPP_EXTERN_C const Il2CppCodeGenModule g_AssemblyU2DCSharp_CodeGenModule;
 const Il2CppCodeGenModule g_AssemblyU2DCSharp_CodeGenModule = 
 {
 	"Assembly-CSharp.dll",
-	301,
+	311,
 	s_methodPointers,
 	0,
 	NULL,

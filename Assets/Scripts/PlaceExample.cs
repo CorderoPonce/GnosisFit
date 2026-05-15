@@ -13,13 +13,14 @@ public class PlaceExample : MonoBehaviour
     [Header("2. Lista de Ejercicios (Archivos .controller)")]
     public RuntimeAnimatorController[] ejerciciosControllers;
 
-    private GameObject modeloInstanciado;
+    public GameObject modeloInstanciado;
     private ARRaycastManager raycastManager;
     private static List<ARRaycastHit> impactos = new List<ARRaycastHit>();
     
     // Rastrean el estado actual elegido por el usuario en ambos menús
-    private int indicePersonajeActual = 0; 
-    private int indiceEjercicioActual = 0; 
+    // Cambia esto:
+    public int indicePersonajeActual = 0; 
+    public int indiceEjercicioActual = 0;
     
     // Almacena la velocidad deseada elegida en el menú
     private float velocidadActual = 1.0f;
@@ -143,9 +144,10 @@ public class PlaceExample : MonoBehaviour
         if (modeloInstanciado != null)
         {
             Animator animator = modeloInstanciado.GetComponent<Animator>();
-            if (animator != null && animator.speed > 0f)
+            if (animator != null)
             {
-                animator.speed = velocidadActual;
+                if (indiceOpcion == 4 && animator.speed > 0f) animator.speed = 0f; 
+                else animator.speed = velocidadActual; 
             }
         }
     }

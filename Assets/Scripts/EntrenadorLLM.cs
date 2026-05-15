@@ -25,8 +25,8 @@ public class EntrenadorLLM : MonoBehaviour
         "4. Si recomiendas uno, DEBES incluir al final: <link=\"NOMBRE_EJERCICIO\"><u>[Mostrar Ejercicio en 3D]</u></link>. " +
         "5. Respuestas breves para celular.";
 
-    private string colorUsuario = "#4CA1AF"; 
-    private string colorEntrenador = "#e732ff";
+    private string colorUsuario = "#ffffff"; 
+    private string colorEntrenador = "#882d94";
 
     void Start()
     {
