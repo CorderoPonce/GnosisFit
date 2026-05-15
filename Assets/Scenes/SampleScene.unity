@@ -11049,6 +11049,50 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!1 &1410839148
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1410839150}
+  - component: {fileID: 1410839149}
+  m_Layer: 0
+  m_Name: DebugEnPantalla
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1410839149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410839148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fefad18e8aff15a47b4a8643f37d86ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DebugEnPantalla
+--- !u!4 &1410839150
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410839148}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 529.1686, y: 164.34076, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1503688960
 GameObject:
   m_ObjectHideFlags: 0
@@ -13623,6 +13667,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1886095315}
   - component: {fileID: 1886095314}
+  - component: {fileID: 1886095316}
   m_Layer: 0
   m_Name: HUDManager
   m_TagString: Untagged
@@ -13659,6 +13704,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1886095316
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1886095313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5e30989ec1a44f42bad5f07f29b00cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EstilizadorUI
 --- !u!1 &1933242914
 GameObject:
   m_ObjectHideFlags: 0
@@ -15840,3 +15897,4 @@ SceneRoots:
   - {fileID: 950985338}
   - {fileID: 1064799461}
   - {fileID: 1886095315}
+  - {fileID: 1410839150}

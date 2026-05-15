@@ -6,6 +6,19 @@ public class ControladorHUD : MonoBehaviour
     public GameObject panelConfiguracion;
     public GameObject panelChat;
 
+    // Función para iniciar la UI nueva
+    void Start()
+    {
+        if (GetComponent<GestorCatalogoVisual>() == null)
+        {
+            gameObject.AddComponent<GestorCatalogoVisual>();
+        }
+        if (GetComponent<GestorControlesAR>() == null)
+        {
+            gameObject.AddComponent<GestorControlesAR>();
+        }
+    }
+
     // Función para el Botón de Configuración
     public void AlternarConfiguracion()
     {

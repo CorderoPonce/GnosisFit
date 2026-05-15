@@ -1,12 +1,23 @@
 # ninja log v5
-183	1047	7981271338457584	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	bd6b2cb3cff4550a
-1051	1415	7981271341770453	C:/Users/Matias Castro/Desktop/Proyectos Antigravity/Proyecto Tenologia Emergente/GenosisFit/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/4r531i5x/obj/arm64-v8a/libswappywrapper.so	4b27f78ca05e375
-50	14961	7981271477182146	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	4bf34999a80ddc99
-91	14988	7981271477161692	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	5cfb78b18106b413
-2	15074	7981271478541539	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	bd3b37c1c88a6ab0
-154	15089	7981271478562225	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	4c08265ab71030be
-15	15230	7981271480107907	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	8aaea811009099ba
-70	15571	7981271483543664	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	1a72a792196c34ac
-31	15749	7981271485358983	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	7d99964f39f09f80
-114	15761	7981271485448084	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	bf721c7bf9a82393
-15762	15964	7981271487552897	C:/Users/Matias Castro/Desktop/Proyectos Antigravity/Proyecto Tenologia Emergente/GenosisFit/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/4r531i5x/obj/arm64-v8a/libgame.so	f3e521a8b0790492
+2765	4445	8005151141343009	C:/Users/Matias Castro/Desktop/Proyectos Antigravity/Proyecto Tenologia Emergente/GenosisFit/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/4r531i5x/obj/arm64-v8a/libswappywrapper.so	4b27f78ca05e375
+44	16941	8005151267834104	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	7d99964f39f09f80
+319	2759	8005151126032557	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	bd6b2cb3cff4550a
+63	14594	8005151243841409	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	5cfb78b18106b413
+109	14704	8005151244422202	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	4bf34999a80ddc99
+197	16323	8005151260765703	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	bf721c7bf9a82393
+5	15050	8005151248767150	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	bd3b37c1c88a6ab0
+26	15567	8005151253061663	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	8aaea811009099ba
+170	15109	8005151249384612	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	4c08265ab71030be
+148	16680	8005151263499378	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	1a72a792196c34ac
+16942	17626	8005151274320087	C:/Users/Matias Castro/Desktop/Proyectos Antigravity/Proyecto Tenologia Emergente/GenosisFit/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/4r531i5x/obj/arm64-v8a/libgame.so	f3e521a8b0790492
+630	2815	8005306712629155	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	bd6b2cb3cff4550a
+2818	4246	8005306727389110	C:/Users/Matias Castro/Desktop/Proyectos Antigravity/Proyecto Tenologia Emergente/GenosisFit/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/4r531i5x/obj/arm64-v8a/libswappywrapper.so	4b27f78ca05e375
+506	8219	8005306767131870	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	4bf34999a80ddc99
+413	8354	8005306768698801	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	5cfb78b18106b413
+438	8504	8005306769876309	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	bd3b37c1c88a6ab0
+528	8541	8005306770231118	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	4c08265ab71030be
+466	8679	8005306772080558	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	8aaea811009099ba
+564	9423	8005306779535116	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	1a72a792196c34ac
+600	9437	8005306779728301	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	bf721c7bf9a82393
+308	9516	8005306780489546	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	7d99964f39f09f80
+9517	9802	8005306783383110	C:/Users/Matias Castro/Desktop/Proyectos Antigravity/Proyecto Tenologia Emergente/GenosisFit/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/4r531i5x/obj/arm64-v8a/libgame.so	f3e521a8b0790492
