@@ -30,6 +30,14 @@ public class PlaceExample : MonoBehaviour
         raycastManager = GetComponent<ARRaycastManager>();
     }
 
+    void Start()
+    {
+        if (GenosisFitDataManager.Instance != null)
+        {
+            indiceEjercicioActual = GenosisFitDataManager.Instance.IndiceEjercicio;
+        }
+    }
+
     void Update()
     {
         if (Input.touchCount > 0)

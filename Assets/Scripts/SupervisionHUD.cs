@@ -180,7 +180,7 @@ public class SupervisionHUD : MonoBehaviour
 
         // Botón Volver
         var btnVolver = UIHelper.CrearBoton("BtnVolver", panelResumen.transform,
-            "VOLVER A AR", ACCENT, Color.black, 28, true);
+            "VOLVER AL MENÚ", ACCENT, Color.black, 28, true);
         var rtBtn = btnVolver.GetComponent<RectTransform>();
         rtBtn.anchorMin = new Vector2(0.5f, 0.1f);
         rtBtn.anchorMax = new Vector2(0.5f, 0.1f);
@@ -259,21 +259,15 @@ public class SupervisionHUD : MonoBehaviour
 
     private void VolverAR()
     {
-        if (gestorSupervision != null)
-        {
-            gestorSupervision.AlternarModoSupervision();
-        }
-
-        // Limpiar
+        // Limpiar suscripciones
         if (analisis != null)
         {
             analisis.OnRepCompletada -= OnRepCompletada;
             analisis.OnDataReceived -= ActualizarVista;
         }
 
-        // Destruir el Canvas overlay completo
-        if (canvasOverlay != null)
-            Destroy(canvasOverlay.gameObject);
+        // Volver al menú principal
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Scene_Menu");
     }
 
     void OnDestroy()
