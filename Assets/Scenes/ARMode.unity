@@ -13657,6 +13657,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1861176698}
   m_CullTransparentMesh: 1
+--- !u!1 &1881333523
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1881333525}
+  - component: {fileID: 1881333524}
+  m_Layer: 0
+  m_Name: GlobalDataManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1881333524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1881333523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fc8f82412e58cd4e97e1b9970b9efbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GenosisFitDataManager
+  EjercicioSeleccionado: Sentadillas
+  IndicePersonaje: 0
+  IndiceEjercicio: 0
+  VieneDeAR: 0
+--- !u!4 &1881333525
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1881333523}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1886095313
 GameObject:
   m_ObjectHideFlags: 0
@@ -14658,7 +14706,6 @@ GameObject:
   - component: {fileID: 1962531607}
   - component: {fileID: 1962531608}
   - component: {fileID: 1962531609}
-  - component: {fileID: 1962531610}
   m_Layer: 0
   m_Name: XR Origin (Mobile AR)
   m_TagString: Untagged
@@ -14841,18 +14888,6 @@ MonoBehaviour:
   colorFeedback: {r: 1, g: 1, b: 1, a: 1}
   cuerpoDetectado: 0
   tiempoInicio: 0
---- !u!114 &1962531610
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1962531599}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: caaa9f21a90743b43a45356871e0c979, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SupervisionDebugger
 --- !u!1 &1983124075
 GameObject:
   m_ObjectHideFlags: 0
@@ -15933,3 +15968,4 @@ SceneRoots:
   - {fileID: 1064799461}
   - {fileID: 1886095315}
   - {fileID: 1410839150}
+  - {fileID: 1881333525}

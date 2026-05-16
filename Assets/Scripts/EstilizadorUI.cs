@@ -47,7 +47,7 @@ public class EstilizadorUI : MonoBehaviour
                          ?? BuscarPorNombre("Bottom Bar")
                          ?? BuscarPorNombre("HUD Bottom")
                          ?? BuscarPorNombre("HUDBottom");
-        if (navbar == null) { Debug.LogWarning("[EstilizadorUI] No se encontró la barra inferior."); return; }
+        if (navbar == null) { Debug.Log("[EstilizadorUI] No se encontró la barra inferior (escena secundaria)."); return; }
 
         // Fondo oscuro con opacidad
         Image bg = navbar.GetComponent<Image>();
@@ -75,7 +75,7 @@ public class EstilizadorUI : MonoBehaviour
         GameObject panelConfig = BuscarPorNombre("MenuConfiguracion")
                               ?? BuscarPorNombre("Menu Configuracion")
                               ?? BuscarPorNombre("PanelConfiguracion");
-        if (panelConfig == null) { Debug.LogWarning("[EstilizadorUI] No se encontró el panel de configuración."); return; }
+        if (panelConfig == null) { Debug.Log("[EstilizadorUI] No se encontró el panel de configuración (escena secundaria)."); return; }
 
         // Fondo oscuro semitransparente
         Image bg = panelConfig.GetComponent<Image>();
@@ -126,7 +126,7 @@ public class EstilizadorUI : MonoBehaviour
         GameObject panelChat = BuscarPorNombre("MenuChat")
                             ?? BuscarPorNombre("Panel Chat")
                             ?? BuscarPorNombre("PanelChat");
-        if (panelChat == null) { Debug.LogWarning("[EstilizadorUI] No se encontró el panel de chat."); return; }
+        if (panelChat == null) { Debug.Log("[EstilizadorUI] No se encontró el panel de chat (escena secundaria)."); return; }
 
         // Fondo principal del chat
         Image bgChat = panelChat.GetComponent<Image>();

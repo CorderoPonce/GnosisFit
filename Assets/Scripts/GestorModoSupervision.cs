@@ -2,288 +2,289 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 
+/// <summary>
+/// Orquesta la activación del Modo Supervisión.
+/// Delega la gestión de capas visuales a SupervisionLayerManager
+/// y la lógica de análisis de postura a AnalisisPostura.
+/// </summary>
 public class GestorModoSupervision : MonoBehaviour
 {
     [Header("Referencias AR")]
     public ARCameraManager cameraManager;
-    public PlaceExample scriptPlaceExample; 
+    public PlaceExample scriptPlaceExample;
 
     [Header("UI y PIP")]
-    public GameObject panelSupervisionUI; 
-    public Transform contenedorPIP; 
-
-    private GameObject clonPIPActual;
-    private bool supervisionActivada = false;
+    public GameObject panelSupervisionUI;
+    public Transform contenedorPIP;
 
     [Header("Visión por Computadora")]
-    public GameObject motorMediaPipe; 
+    public GameObject motorMediaPipe;
 
-    public void AlternarModoSupervision()
+    [Header("Supervisión de Postura")]
+    public AnalisisPostura analisisPostura;
+
+    // ─────────────────────────────────────────────────────────────────
+    // ESTADO INTERNO
+    // ─────────────────────────────────────────────────────────────────
+    private bool _supervisionActivada = false;
+    private GameObject _clonPIPActual;
+    private string _nombreEjercicioActual = "Ejercicio";
+    private SupervisionLayerManager _layerManager;
+
+    // ─────────────────────────────────────────────────────────────────
+    // INICIALIZACIÓN
+    // ─────────────────────────────────────────────────────────────────
+
+    private void Awake()
     {
-        supervisionActivada = !supervisionActivada;
+        Debug.Log("[GestorSupervision] Awake iniciado.");
+        // Crear o encontrar el LayerManager en este mismo GO
+        _layerManager = GetComponent<SupervisionLayerManager>();
+        if (_layerManager == null)
+            _layerManager = gameObject.AddComponent<SupervisionLayerManager>();
 
-        if (supervisionActivada)
+        _layerManager.motorMediaPipe = motorMediaPipe;
+
+        // Auto-vincular el botón si existe (por si se perdió la referencia en el Inspector)
+        var btn = GameObject.Find("BotonCamara")?.GetComponent<UnityEngine.UI.Button>();
+        if (btn != null)
         {
-            // 1. Ocultar el modelo original de forma segura
-            if (scriptPlaceExample != null && scriptPlaceExample.modeloInstanciado != null)
-            {
-                scriptPlaceExample.modeloInstanciado.SetActive(false);
-            }
-
-            if (scriptPlaceExample != null) scriptPlaceExample.enabled = false;
-            
-            // 2. Encender la UI
-            if (panelSupervisionUI != null) panelSupervisionUI.SetActive(true);
-
-            // 3. Crear el clon (Protegido contra errores)
-            GenerarClonPIP();
-
-            // 4. Iniciar el semáforo con la dirección correcta
-            StartCoroutine(ReiniciarCamaraAR(CameraFacingDirection.User));
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(AlternarModoSupervision);
+            Debug.Log("[GestorSupervision] BotonCamara vinculado automáticamente.");
         }
         else
         {
-            StartCoroutine(ReiniciarCamaraAR(CameraFacingDirection.World));
-            
-            if (scriptPlaceExample != null) scriptPlaceExample.enabled = true;
-            if (panelSupervisionUI != null) panelSupervisionUI.SetActive(false);
-
-            if (scriptPlaceExample != null && scriptPlaceExample.modeloInstanciado != null)
-            {
-                scriptPlaceExample.modeloInstanciado.SetActive(true);
-            }
-            
-            if (clonPIPActual != null) Destroy(clonPIPActual);
+            Debug.LogWarning("[GestorSupervision] No se encontró el objeto 'BotonCamara' para auto-vincular.");
         }
     }
 
-    private IEnumerator ReiniciarCamaraAR(CameraFacingDirection nuevaDireccion)
+    // ─────────────────────────────────────────────────────────────────
+    // PUNTO DE ENTRADA (BOTÓN)
+    // ─────────────────────────────────────────────────────────────────
+
+    public void AlternarModoSupervision()
     {
-        ARSession arSession = FindFirstObjectByType<ARSession>(FindObjectsInactive.Include);
-        ARPlaneManager planeManager = FindFirstObjectByType<ARPlaneManager>(FindObjectsInactive.Include);
-        ARCameraBackground cameraBackground = FindFirstObjectByType<ARCameraBackground>(FindObjectsInactive.Include);
+        Debug.Log("[GestorSupervision] Iniciando transición a escena de Supervisión...");
 
-        Debug.Log($"[GestorSupervision] Iniciando transición → {nuevaDireccion}. Estado ARSession inicial: {ARSession.state}");
-
-        // ── PASO 1: APAGAR AR ─────────────────────────────────────────────
-        if (cameraBackground != null) cameraBackground.enabled = false;
-        if (planeManager != null) planeManager.enabled = false;
-        if (cameraManager != null) cameraManager.enabled = false;
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-        // ═══════════════════════════════════════════════════════════════════
-        // ANDROID: Flujo completo
-        // ═══════════════════════════════════════════════════════════════════
-
-        // 1. Detener MediaPipe si estaba corriendo
-        if (motorMediaPipe != null && motorMediaPipe.activeSelf)
+        // 1. Guardar estado en el DataManager persistente
+        if (GenosisFitDataManager.Instance != null)
         {
-            motorMediaPipe.SendMessage("Stop", SendMessageOptions.DontRequireReceiver);
-            Debug.Log("[GestorSupervision] [Android] MediaPipe Stop() enviado.");
-        }
-
-        // 2. Desactivar ARSession GO para liberar la cámara trasera
-        if (arSession != null)
-        {
-            arSession.gameObject.SetActive(false);
-            Debug.Log("[GestorSupervision] [Android] ARSession GO desactivado.");
-        }
-
-        // 3. Esperar a que Android libere el hardware
-        yield return new WaitForSeconds(1.5f);
-        Debug.Log("[GestorSupervision] [Android] Espera de liberación completada.");
-
-        if (nuevaDireccion == CameraFacingDirection.User)
-        {
-            // 4. Activar MediaPipe GO si estaba desactivado (esto dispara Bootstrap.Init())
-            if (motorMediaPipe != null && !motorMediaPipe.activeSelf)
+            GenosisFitDataManager.Instance.VieneDeAR = true;
+            
+            if (scriptPlaceExample != null)
             {
-                motorMediaPipe.SetActive(true);
-                Debug.Log("[GestorSupervision] [Android] MediaPipe GO activado. Esperando Bootstrap...");
-            }
-
-            // 5. Esperar a que Bootstrap termine de inicializar ImageSourceProvider
-            float timeout = 10f;
-            float waited = 0f;
-            while (Mediapipe.Unity.Sample.ImageSourceProvider.ImageSource == null && waited < timeout)
-            {
-                waited += Time.deltaTime;
-                yield return null;
-            }
-            Debug.Log($"[GestorSupervision] [Android] Bootstrap completado en {waited:F2}s. ImageSource null={Mediapipe.Unity.Sample.ImageSourceProvider.ImageSource == null}");
-
-            // 6. Configurar cámara frontal
-            var src = Mediapipe.Unity.Sample.ImageSourceProvider.ImageSource;
-            if (src != null)
-            {
-                var devices = WebCamTexture.devices;
-                Debug.Log($"[GestorSupervision] [Android] Cámaras disponibles: {devices.Length}");
-                for (int i = 0; i < devices.Length; i++)
+                GenosisFitDataManager.Instance.IndicePersonaje = scriptPlaceExample.indicePersonajeActual;
+                GenosisFitDataManager.Instance.IndiceEjercicio = scriptPlaceExample.indiceEjercicioActual;
+                
+                // Buscar el nombre y tipo del ejercicio actual
+                foreach (var ej in ExerciseData.ObtenerCatalogo())
                 {
-                    Debug.Log($"[GestorSupervision] [Android]   [{i}] isFrontFacing: {devices[i].isFrontFacing}");
-                    if (devices[i].isFrontFacing)
+                    if (ej.idControlador == scriptPlaceExample.indiceEjercicioActual)
                     {
-                        src.SelectSource(i);
-                        Debug.Log($"[GestorSupervision] [Android] SelectSource({i}) OK.");
+                        GenosisFitDataManager.Instance.EjercicioSeleccionado = ej.nombre;
+                        GenosisFitDataManager.Instance.TipoEjercicio = ej.tipoSupervision;
                         break;
                     }
                 }
             }
-            else
-            {
-                Debug.LogError("[GestorSupervision] [Android] FALLO: ImageSource sigue null tras esperar Bootstrap.");
-            }
-
-            // 7. Iniciar captura de MediaPipe
-            if (motorMediaPipe != null)
-            {
-                motorMediaPipe.SendMessage("Play", SendMessageOptions.DontRequireReceiver);
-                Debug.Log("[GestorSupervision] [Android] MediaPipe Play() enviado.");
-
-                // 8. Configurar Canvas y garantizar que la UI esté por encima
-                yield return null; // Esperar un frame para que Screen.Initialize() se ejecute
-
-                // Desactivar raycast en el RawImage de MediaPipe
-                var mpScreen = FindFirstObjectByType<Mediapipe.Unity.Screen>(FindObjectsInactive.Include);
-                if (mpScreen != null)
-                {
-                    var rawImg = mpScreen.GetComponentInChildren<UnityEngine.UI.RawImage>(true);
-                    if (rawImg != null) rawImg.raycastTarget = false;
-                }
-
-                // PLAN C: Crear un Canvas separado para la UI, encima de todo
-                if (panelSupervisionUI != null)
-                {
-                    // Crear Canvas independiente solo si no existe ya
-                    var existingOverlay = GameObject.Find("CanvasSupervisionOverlay");
-                    if (existingOverlay == null)
-                    {
-                        var overlayGO = new GameObject("CanvasSupervisionOverlay");
-                        var overlayCanvas = overlayGO.AddComponent<Canvas>();
-                        overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                        overlayCanvas.sortingOrder = 100; // Siempre encima
-                        overlayGO.AddComponent<UnityEngine.UI.CanvasScaler>();
-                        overlayGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
-
-                        // Mover el panel de supervisión al nuevo Canvas
-                        panelSupervisionUI.transform.SetParent(overlayGO.transform, false);
-
-                        // Estirar el panel para que llene el nuevo Canvas
-                        var panelRT = panelSupervisionUI.GetComponent<RectTransform>();
-                        if (panelRT != null)
-                        {
-                            panelRT.anchorMin = Vector2.zero;
-                            panelRT.anchorMax = Vector2.one;
-                            panelRT.offsetMin = Vector2.zero;
-                            panelRT.offsetMax = Vector2.zero;
-                        }
-
-                        Debug.Log("[GestorSupervision] [Android] Canvas separado creado para UI (sortingOrder=100).");
-                    }
-                }
-            }
-        }
-        else
-        {
-            // ── Volver a AR ──
-            // Detener MediaPipe para liberar cámara frontal
-            if (motorMediaPipe != null && motorMediaPipe.activeSelf)
-            {
-                motorMediaPipe.SendMessage("Stop", SendMessageOptions.DontRequireReceiver);
-                Debug.Log("[GestorSupervision] [Android] MediaPipe Stop() para liberar cámara frontal.");
-                yield return new WaitForSeconds(0.5f);
-            }
-
-            // Reactivar ARSession
-            if (arSession != null)
-            {
-                arSession.gameObject.SetActive(true);
-                Debug.Log("[GestorSupervision] [Android] ARSession GO reactivado.");
-            }
-            yield return new WaitForSeconds(0.5f);
-
-            if (cameraBackground != null) cameraBackground.enabled = true;
-            if (cameraManager != null) cameraManager.requestedFacingDirection = CameraFacingDirection.World;
-            if (cameraManager != null) cameraManager.enabled = true;
-            if (planeManager != null) planeManager.enabled = true;
-            Debug.Log("[GestorSupervision] [Android] AR restaurado.");
         }
 
-#else
-        // ═══════════════════════════════════════════════════════════════════
-        // PC / EDITOR: Flujo original que ya funciona
-        // ═══════════════════════════════════════════════════════════════════
-        if (motorMediaPipe != null)
-        {
-            motorMediaPipe.SendMessage("Stop", SendMessageOptions.DontRequireReceiver);
-            motorMediaPipe.SetActive(false);
-        }
-        if (arSession != null) { arSession.enabled = false; arSession.Reset(); }
-        yield return new WaitForSeconds(0.5f);
-
-        Debug.Log("[GestorSupervision] Espera completada. Iniciando modo destino...");
-
-        if (nuevaDireccion == CameraFacingDirection.User)
-        {
-            if (motorMediaPipe != null)
-            {
-                motorMediaPipe.SetActive(true);
-                yield return null;
-            }
-            var devices = WebCamTexture.devices;
-            Debug.Log($"[GestorSupervision] Cámaras disponibles: {devices.Length}");
-            for (int i = 0; i < devices.Length; i++)
-            {
-                Debug.Log($"[GestorSupervision]   [{i}] Camera {i} — isFrontFacing: {devices[i].isFrontFacing}");
-                if (devices[i].isFrontFacing)
-                {
-                    var src = Mediapipe.Unity.Sample.ImageSourceProvider.ImageSource;
-                    Debug.Log($"[GestorSupervision] ImageSource es null: {src == null}");
-                    if (src != null)
-                    {
-                        src.SelectSource(i);
-                        Debug.Log($"[GestorSupervision] SelectSource({i}) llamado.");
-                    }
-                    break;
-                }
-            }
-            if (motorMediaPipe != null)
-            {
-                motorMediaPipe.SendMessage("Play", SendMessageOptions.DontRequireReceiver);
-                Debug.Log("[GestorSupervision] MediaPipe.Play() enviado.");
-            }
-        }
-        else
-        {
-            if (arSession != null) arSession.enabled = true;
-            if (cameraBackground != null) cameraBackground.enabled = true;
-            if (cameraManager != null) cameraManager.requestedFacingDirection = CameraFacingDirection.World;
-            if (cameraManager != null) cameraManager.enabled = true;
-            if (planeManager != null) planeManager.enabled = true;
-            Debug.Log("[GestorSupervision] AR restaurado.");
-        }
-#endif
+        // 2. Cargar la escena dedicada
+        // Esto automáticamente liberará ARCore y la cámara trasera
+        UnityEngine.SceneManagement.SceneManager.LoadScene("SupervisionMode");
     }
+
+    // ─────────────────────────────────────────────────────────────────
+    // ACTIVACIÓN
+    // ─────────────────────────────────────────────────────────────────
+
+    private IEnumerator ActivarSupervision()
+    {
+        // 1. Ocultar el modelo AR y deshabilitar PlaceExample
+        if (scriptPlaceExample != null && scriptPlaceExample.modeloInstanciado != null)
+            scriptPlaceExample.modeloInstanciado.SetActive(false);
+        if (scriptPlaceExample != null)
+            scriptPlaceExample.enabled = false;
+
+        // 2. Apagar subsistemas AR para liberar la cámara trasera
+        yield return ApagarAR();
+
+        // 3. Activar el panel de supervisión (contiene Annotatable Screen)
+        if (panelSupervisionUI != null)
+            panelSupervisionUI.SetActive(true);
+
+        // 4. Crear clon PIP del ejercicio en curso
+        GenerarClonPIP();
+
+        // 5. Configurar análisis de postura ANTES de activar cámara
+        ConfigurarAnalisisPostura();
+
+        // 6. Activar cámara frontal + Bootstrap + reorganizar capas
+        yield return _layerManager.ActivarAsync();
+
+        // 7. Si el LayerManager logró inicializarse, construir el HUD dentro de su Canvas
+        if (_layerManager.EstaActivo && !_layerManager.HuboError)
+        {
+            var canvasMaestro = _layerManager.ObtenerCanvasMaestro();
+            CrearHUDDentroDeCanvas(canvasMaestro);
+            Debug.Log("[GestorSupervision] Modo Supervisión activado correctamente.");
+        }
+        else
+        {
+            Debug.LogError("[GestorSupervision] Fallo crítico en inicialización. Revirtiendo a modo AR...");
+            _supervisionActivada = false;
+            DesactivarSupervision();
+            // Aquí se podría disparar una notificación UI de "Error de Cámara"
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // DESACTIVACIÓN
+    // ─────────────────────────────────────────────────────────────────
+
+    private void DesactivarSupervision()
+    {
+        // Desactivar análisis de postura
+        if (analisisPostura != null) analisisPostura.enabled = false;
+
+        // LayerManager restaura la jerarquía y destruye el HUD
+        _layerManager.Desactivar();
+
+        // Restaurar UI
+        if (panelSupervisionUI != null) panelSupervisionUI.SetActive(false);
+        if (_clonPIPActual != null) Destroy(_clonPIPActual);
+
+        // Restaurar AR
+        StartCoroutine(RestaurarAR());
+
+        // Restaurar modelo
+        if (scriptPlaceExample != null) scriptPlaceExample.enabled = true;
+        if (scriptPlaceExample != null && scriptPlaceExample.modeloInstanciado != null)
+            scriptPlaceExample.modeloInstanciado.SetActive(true);
+
+        Debug.Log("[GestorSupervision] Modo Supervisión desactivado.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // GESTIÓN DE AR
+    // ─────────────────────────────────────────────────────────────────
+
+    private IEnumerator ApagarAR()
+    {
+        var arSession = FindFirstObjectByType<ARSession>(FindObjectsInactive.Include);
+        var planeManager = FindFirstObjectByType<ARPlaneManager>(FindObjectsInactive.Include);
+        var cameraBackground = FindFirstObjectByType<ARCameraBackground>(FindObjectsInactive.Include);
+
+        if (cameraBackground != null) cameraBackground.enabled = false;
+        if (planeManager != null) planeManager.enabled = false;
+        if (cameraManager != null) cameraManager.enabled = false;
+
+#if !UNITY_EDITOR
+        if (arSession != null) arSession.gameObject.SetActive(false);
+        yield return new WaitForSeconds(1.0f);
+#else
+        if (arSession != null) { arSession.enabled = false; arSession.Reset(); }
+        yield return new WaitForSeconds(0.2f);
+#endif
+        Debug.Log("[GestorSupervision] AR apagado.");
+    }
+
+    private IEnumerator RestaurarAR()
+    {
+        var arSession = FindFirstObjectByType<ARSession>(FindObjectsInactive.Include);
+        var planeManager = FindFirstObjectByType<ARPlaneManager>(FindObjectsInactive.Include);
+        var cameraBackground = FindFirstObjectByType<ARCameraBackground>(FindObjectsInactive.Include);
+
+#if !UNITY_EDITOR
+        if (arSession != null) arSession.gameObject.SetActive(true);
+        yield return new WaitForSeconds(0.5f);
+#else
+        if (arSession != null) arSession.enabled = true;
+        yield return null;
+#endif
+
+        if (cameraBackground != null) cameraBackground.enabled = true;
+        if (cameraManager != null)
+        {
+            cameraManager.requestedFacingDirection = CameraFacingDirection.World;
+            cameraManager.enabled = true;
+        }
+        if (planeManager != null) planeManager.enabled = true;
+
+        Debug.Log("[GestorSupervision] AR restaurado.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // CLON PIP
+    // ─────────────────────────────────────────────────────────────────
 
     private void GenerarClonPIP()
     {
-        // Seguro: Si no hay referencias, no intentamos clonar nada para no crashear la app
-        if (scriptPlaceExample == null || scriptPlaceExample.avataresPrefabs == null || scriptPlaceExample.avataresPrefabs.Length == 0) return;
+        if (scriptPlaceExample == null || scriptPlaceExample.avataresPrefabs == null
+            || scriptPlaceExample.avataresPrefabs.Length == 0) return;
 
-        if (clonPIPActual != null) Destroy(clonPIPActual);
+        if (_clonPIPActual != null) Destroy(_clonPIPActual);
 
         int idPersonaje = scriptPlaceExample.indicePersonajeActual;
         int idEjercicio = scriptPlaceExample.indiceEjercicioActual;
 
-        // Seguro de índices
         if (idPersonaje >= scriptPlaceExample.avataresPrefabs.Length) idPersonaje = 0;
 
-        clonPIPActual = Instantiate(scriptPlaceExample.avataresPrefabs[idPersonaje], contenedorPIP.position, contenedorPIP.rotation);
-        
-        Animator animator = clonPIPActual.GetComponent<Animator>();
-        if (animator != null && scriptPlaceExample.ejerciciosControllers != null && idEjercicio < scriptPlaceExample.ejerciciosControllers.Length)
+        _clonPIPActual = Instantiate(
+            scriptPlaceExample.avataresPrefabs[idPersonaje],
+            contenedorPIP.position,
+            contenedorPIP.rotation);
+
+        var animator = _clonPIPActual.GetComponent<Animator>();
+        if (animator != null && scriptPlaceExample.ejerciciosControllers != null
+            && idEjercicio < scriptPlaceExample.ejerciciosControllers.Length)
         {
             animator.runtimeAnimatorController = scriptPlaceExample.ejerciciosControllers[idEjercicio];
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // ANÁLISIS DE POSTURA
+    // ─────────────────────────────────────────────────────────────────
+
+    private void ConfigurarAnalisisPostura()
+    {
+        if (analisisPostura == null) return;
+
+        TipoSupervision tipo = TipoSupervision.Generic;
+        _nombreEjercicioActual = "Ejercicio";
+
+        if (scriptPlaceExample != null)
+        {
+            int idEjercicio = scriptPlaceExample.indiceEjercicioActual;
+            foreach (var ej in ExerciseData.ObtenerCatalogo())
+            {
+                if (ej.idControlador == idEjercicio)
+                {
+                    tipo = ej.tipoSupervision;
+                    _nombreEjercicioActual = ej.nombre;
+                    break;
+                }
+            }
+        }
+
+        analisisPostura.ConfigurarEjercicio(tipo);
+        analisisPostura.enabled = true;
+        Debug.Log($"[GestorSupervision] AnalisisPostura configurado: {tipo} ({_nombreEjercicioActual})");
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // HUD
+    // ─────────────────────────────────────────────────────────────────
+
+    private void CrearHUDDentroDeCanvas(Canvas canvasMaestro)
+    {
+        if (canvasMaestro == null) return;
+
+        var hud = canvasMaestro.gameObject.AddComponent<SupervisionHUD>();
+        hud.Inicializar(canvasMaestro, analisisPostura, this, _nombreEjercicioActual);
+
+        Debug.Log($"[GestorSupervision] HUD creado para: {_nombreEjercicioActual}");
     }
 }

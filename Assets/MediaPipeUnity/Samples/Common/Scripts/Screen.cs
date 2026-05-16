@@ -30,85 +30,22 @@ namespace Mediapipe.Unity
     {
       _imageSource = imageSource;
 
-#if UNITY_ANDROID && !UNITY_EDITOR
-      // Android: configurar tamaño basado en pantalla, con rotación
-      var rotation = _imageSource.rotation.Reverse();
-      var euler = rotation.GetEulerAngles();
-      bool isRotated90 = Mathf.Approximately(Mathf.Abs(euler.z), 90) || Mathf.Approximately(Mathf.Abs(euler.z), 270);
-
-      float screenW = UnityEngine.Screen.width;
-      float screenH = UnityEngine.Screen.height;
-
-      // Centrar el RawImage
-      _screen.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-      _screen.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-      _screen.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-      _screen.rectTransform.anchoredPosition = Vector2.zero;
-
-      if (isRotated90)
-      {
-        // Pre-swap: poner (alto, ancho) para que después de rotar 90° se vea (ancho, alto)
-        _screen.rectTransform.sizeDelta = new Vector2(screenH, screenW);
-      }
-      else
-      {
-        _screen.rectTransform.sizeDelta = new Vector2(screenW, screenH);
-      }
-
-      // Aplicar rotación
-      Rotate(rotation);
-      // Estirar los contenedores PADRES (sin tocar el RawImage)
-      StretchAllParents();
-#else
       Resize(_imageSource.textureWidth, _imageSource.textureHeight);
       Rotate(_imageSource.rotation.Reverse());
-#endif
       ResetUvRect(RunningMode.Async);
       texture = imageSource.GetCurrentTexture();
     }
 
     public void Resize(int width, int height)
     {
-#if UNITY_ANDROID && !UNITY_EDITOR
-      // En Android: no hacer nada aquí — Initialize() maneja todo
-      return;
-#else
       _screen.rectTransform.sizeDelta = new Vector2(width, height);
-#endif
     }
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-    private void StretchAllParents()
-    {
-      var canvas = _screen.GetComponentInParent<Canvas>();
-      // Empezar desde el PADRE del RawImage (no tocar el RawImage mismo)
-      Transform current = _screen.transform.parent;
-      while (current != null && (canvas == null || current != canvas.transform))
-      {
-        var rt = current as RectTransform;
-        if (rt != null)
-        {
-          rt.anchorMin = Vector2.zero;
-          rt.anchorMax = Vector2.one;
-          rt.offsetMin = Vector2.zero;
-          rt.offsetMax = Vector2.zero;
-          rt.localEulerAngles = Vector3.zero;
-          rt.localScale = Vector3.one;
-        }
-        current = current.parent;
-      }
-      if (canvas != null)
-      {
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = -1;
-      }
-    }
-#endif
 
     public void Rotate(RotationAngle rotationAngle)
     {
       _screen.rectTransform.localEulerAngles = rotationAngle.GetEulerAngles();
     }
+
 
     public void ReadSync(Experimental.TextureFrame textureFrame)
     {

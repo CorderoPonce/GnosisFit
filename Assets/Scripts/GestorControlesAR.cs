@@ -23,19 +23,19 @@ public class GestorControlesAR : MonoBehaviour
     private TextMeshProUGUI textoModeloMain;
     private GameObject panelModelos;
     private bool modelosAbiertos = false;
-    private string[] nombresModelos = { "👤 Modelo" };
+    private string[] nombresModelos = { "Modelo" };
 
     void Start()
     {
-        scriptAR = FindObjectOfType<PlaceExample>();
-        scriptHUD = FindObjectOfType<ControladorHUD>();
+        scriptAR = FindFirstObjectByType<PlaceExample>();
+        scriptHUD = FindFirstObjectByType<ControladorHUD>();
 
         if (scriptAR != null && scriptAR.avataresPrefabs != null && scriptAR.avataresPrefabs.Length > 0)
         {
             nombresModelos = new string[scriptAR.avataresPrefabs.Length];
             for(int i = 0; i < scriptAR.avataresPrefabs.Length; i++)
             {
-                nombresModelos[i] = "👤 " + scriptAR.avataresPrefabs[i].name;
+                nombresModelos[i] = scriptAR.avataresPrefabs[i].name;
             }
         }
 
@@ -123,7 +123,7 @@ public class GestorControlesAR : MonoBehaviour
         panelVelocidades.SetActive(false);
 
         // 3. Botón Pausa
-        var btnPausa = UIHelper.CrearBoton("BtnPausa", panelHUD.transform, "⏸ Pausar", new Color(0,0,0,0.6f), UIHelper.BLANCO, 26, true);
+        var btnPausa = UIHelper.CrearBoton("BtnPausa", panelHUD.transform, "PAUSAR", new Color(0,0,0,0.6f), UIHelper.BLANCO, 26, true);
         var rtPausa = btnPausa.GetComponent<RectTransform>();
         rtPausa.anchorMin = new Vector2(1, 1); rtPausa.anchorMax = new Vector2(1, 1);
         rtPausa.pivot = new Vector2(1, 1);
@@ -171,12 +171,12 @@ public class GestorControlesAR : MonoBehaviour
         estaPausado = !estaPausado;
         if (estaPausado)
         {
-            textoPausa.text = "▶ Reanudar";
+            textoPausa.text = "REANUDAR";
             if (scriptAR != null) scriptAR.CambiarVelocidadAnimacion(4); // 4 = Pausa en PlaceExample
         }
         else
         {
-            textoPausa.text = "⏸ Pausar";
+            textoPausa.text = "PAUSAR";
             if (scriptAR != null) scriptAR.AlternarPausaAnimacion(); // Restaura la velocidad en base a la variable interna de PlaceExample
         }
     }

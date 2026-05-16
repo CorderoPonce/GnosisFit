@@ -14658,7 +14658,6 @@ GameObject:
   - component: {fileID: 1962531607}
   - component: {fileID: 1962531608}
   - component: {fileID: 1962531609}
-  - component: {fileID: 1962531610}
   m_Layer: 0
   m_Name: XR Origin (Mobile AR)
   m_TagString: Untagged
@@ -14792,7 +14791,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1962531599}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: caeceacb624484daf8e379c2252fd246, type: 3}
   m_Name: 
@@ -14809,7 +14808,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1962531599}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9e5861fe4d817477986290fde61dbc8c, type: 3}
   m_Name: 
@@ -14841,18 +14840,6 @@ MonoBehaviour:
   colorFeedback: {r: 1, g: 1, b: 1, a: 1}
   cuerpoDetectado: 0
   tiempoInicio: 0
---- !u!114 &1962531610
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1962531599}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: caaa9f21a90743b43a45356871e0c979, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SupervisionDebugger
 --- !u!1 &1983124075
 GameObject:
   m_ObjectHideFlags: 0
