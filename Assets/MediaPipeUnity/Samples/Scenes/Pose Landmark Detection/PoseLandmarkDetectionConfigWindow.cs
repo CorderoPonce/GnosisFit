@@ -27,7 +27,26 @@ namespace Mediapipe.Unity.Sample.PoseLandmarkDetection.UI
 
     private void Start()
     {
-      _config = GameObject.Find("Solution").GetComponent<PoseLandmarkerRunner>().config;
+      var solutionObj = GameObject.Find("Solution");
+      if (solutionObj == null)
+        solutionObj = GameObject.Find("Solution_Supervision");
+
+      if (solutionObj == null)
+      {
+        Debug.LogWarning("PoseLandmarkDetectionConfigWindow: No se encontró 'Solution' ni 'Solution_Supervision'. Desactivando ventana de config.");
+        gameObject.SetActive(false);
+        return;
+      }
+
+      var runner = solutionObj.GetComponent<PoseLandmarkerRunner>();
+      if (runner == null)
+      {
+        Debug.LogWarning("PoseLandmarkDetectionConfigWindow: No se encontró PoseLandmarkerRunner en " + solutionObj.name);
+        gameObject.SetActive(false);
+        return;
+      }
+
+      _config = runner.config;
       InitializeContents();
     }
 

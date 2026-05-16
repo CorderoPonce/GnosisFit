@@ -13,7 +13,7 @@ public class EntrenadorLLM : MonoBehaviour
     public ScrollRect scrollChat;
 
     [Header("Configuración Ollama")]
-    public string urlOllama = "http://192.168.1.10:11434/api/generate";
+    public string urlOllama = "https://imply-perjury-yahoo.ngrok-free.dev/api/generate";
     public string nombreModelo = "llama3";
 
     private string contextoEntrenador = 

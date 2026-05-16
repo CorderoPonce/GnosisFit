@@ -23,8 +23,8 @@ public class GestorCatalogoVisual : MonoBehaviour
     void Start()
     {
         // Encontrar dependencias
-        scriptAR = FindObjectOfType<PlaceExample>();
-        var hud = FindObjectOfType<ControladorHUD>();
+        scriptAR = FindFirstObjectByType<PlaceExample>();
+        var hud = FindFirstObjectByType<ControladorHUD>();
 
         if (hud != null && hud.panelConfiguracion != null)
         {
@@ -77,7 +77,7 @@ public class GestorCatalogoVisual : MonoBehaviour
         rt.anchoredPosition = new Vector2(0, -h/2);
 
         // Menú icon
-        var menu = UIHelper.CrearTexto("Menu", panel.transform, "☰", 40, UIHelper.GRIS_OSCURO, FontStyles.Bold);
+        var menu = UIHelper.CrearTexto("Menu", panel.transform, "[=]", 40, UIHelper.GRIS_OSCURO, FontStyles.Bold);
         var mrt = menu.GetComponent<RectTransform>();
         mrt.anchorMin = new Vector2(0, 0.5f); mrt.anchorMax = new Vector2(0, 0.5f);
         mrt.pivot = new Vector2(0, 0.5f);
@@ -90,7 +90,7 @@ public class GestorCatalogoVisual : MonoBehaviour
         trt.sizeDelta = new Vector2(400, 60); trt.anchoredPosition = new Vector2(0, -10);
 
         // Lupa icon
-        var search = UIHelper.CrearTexto("Search", panel.transform, "🔍", 36, UIHelper.GRIS_OSCURO);
+        var search = UIHelper.CrearTexto("Search", panel.transform, "[?]", 36, UIHelper.GRIS_OSCURO);
         var srt = search.GetComponent<RectTransform>();
         srt.anchorMin = new Vector2(1, 0.5f); srt.anchorMax = new Vector2(1, 0.5f);
         srt.pivot = new Vector2(1, 0.5f);
@@ -334,7 +334,7 @@ public class GestorCatalogoVisual : MonoBehaviour
                 scriptAR.CambiarEjercicio(ej.idControlador);
                 
                 // Cerrar el menú al seleccionar
-                var hud = FindObjectOfType<ControladorHUD>();
+                var hud = FindFirstObjectByType<ControladorHUD>();
                 if (hud != null) hud.CerrarTodo();
             }
         });

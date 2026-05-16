@@ -9,30 +9,16 @@ public class ControladorHUD : MonoBehaviour
     // Función para iniciar la UI nueva
     void Start()
     {
-        if (GetComponent<GestorCatalogoVisual>() == null)
-        {
-            gameObject.AddComponent<GestorCatalogoVisual>();
-        }
         if (GetComponent<GestorControlesAR>() == null)
         {
             gameObject.AddComponent<GestorControlesAR>();
         }
     }
 
-    // Función para el Botón de Configuración
+    // Función para el Botón de Configuración (ahora usado como Volver)
     public void AlternarConfiguracion()
     {
-        bool estadoActual = panelConfiguracion.activeSelf;
-        
-        // Primero cerramos todo para que no se traslapen
-        panelConfiguracion.SetActive(false);
-        panelChat.SetActive(false);
-
-        // Si antes estaba apagado, lo encendemos
-        if (!estadoActual)
-        {
-            panelConfiguracion.SetActive(true);
-        }
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Scene_Menu");
     }
 
     // Función para el Botón de Chat

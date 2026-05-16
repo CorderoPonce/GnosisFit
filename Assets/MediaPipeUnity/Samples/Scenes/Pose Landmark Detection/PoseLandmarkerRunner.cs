@@ -4,6 +4,7 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
+using System;
 using System.Collections;
 using Mediapipe.Tasks.Vision.PoseLandmarker;
 using UnityEngine;
@@ -14,7 +15,12 @@ namespace Mediapipe.Unity.Sample.PoseLandmarkDetection
   public class PoseLandmarkerRunner : VisionTaskApiRunner<PoseLandmarker>
   {
 
+    /// <summary>Resultado del último frame detectado (todos los modos).</summary>
     public static PoseLandmarkerResult ResultadoGlobal;
+
+    /// <summary>Evento disparado cada vez que se recibe un nuevo resultado de pose.</summary>
+    public static event Action<PoseLandmarkerResult> OnResultadoGlobal;
+
     [SerializeField] private PoseLandmarkerResultAnnotationController _poseLandmarkerResultAnnotationController;
 
     private Experimental.TextureFramePool _textureFramePool;
@@ -135,6 +141,8 @@ namespace Mediapipe.Unity.Sample.PoseLandmarkDetection
           case Tasks.Vision.Core.RunningMode.IMAGE:
             if (taskApi.TryDetect(image, imageProcessingOptions, ref result))
             {
+              ResultadoGlobal = result;
+              OnResultadoGlobal?.Invoke(result);
               _poseLandmarkerResultAnnotationController.DrawNow(result);
             }
             else
@@ -146,6 +154,8 @@ namespace Mediapipe.Unity.Sample.PoseLandmarkDetection
           case Tasks.Vision.Core.RunningMode.VIDEO:
             if (taskApi.TryDetectForVideo(image, GetCurrentTimestampMillisec(), imageProcessingOptions, ref result))
             {
+              ResultadoGlobal = result;
+              OnResultadoGlobal?.Invoke(result);
               _poseLandmarkerResultAnnotationController.DrawNow(result);
             }
             else
@@ -164,6 +174,7 @@ namespace Mediapipe.Unity.Sample.PoseLandmarkDetection
     private void OnPoseLandmarkDetectionOutput(PoseLandmarkerResult result, Image image, long timestamp)
     {
       ResultadoGlobal = result;
+      OnResultadoGlobal?.Invoke(result);
       _poseLandmarkerResultAnnotationController.DrawLater(result);
       DisposeAllMasks(result);
     }
