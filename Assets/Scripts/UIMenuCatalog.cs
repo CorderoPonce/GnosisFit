@@ -125,7 +125,28 @@ public class UIMenuCatalog : MonoBehaviour
         // ── ScrollView ──
         var scrollGO = CreateScrollView(bg.transform);
         contentParent = scrollGO.transform;
-        
+
+        // ── Botón Chatbot (flotante, esquina inferior derecha) ──
+        var chatBtnGO = CreatePanel(canvasGO.transform, "BtnChatbot", new Color(0.00f, 0.75f, 0.65f, 1f));
+        var chatBtnRT = chatBtnGO.GetComponent<RectTransform>();
+        chatBtnRT.anchorMin = new Vector2(1, 0);
+        chatBtnRT.anchorMax = new Vector2(1, 0);
+        chatBtnRT.pivot = new Vector2(1, 0);
+        chatBtnRT.sizeDelta = new Vector2(260, 80);
+        chatBtnRT.anchoredPosition = new Vector2(-30, 40);
+
+        var chatTxt = CreateTMP(chatBtnGO.transform, "💬 Chatbot", 28, Color.white,
+            FontStyles.Bold, TextAlignmentOptions.Center);
+        Stretch(chatTxt.gameObject);
+
+        var chatBtn = chatBtnGO.AddComponent<Button>();
+        chatBtn.targetGraphic = chatBtnGO.GetComponent<Image>();
+        var chatColors = chatBtn.colors;
+        chatColors.highlightedColor = new Color(0.0f, 0.6f, 0.5f);
+        chatColors.pressedColor = new Color(0.0f, 0.5f, 0.4f);
+        chatBtn.colors = chatColors;
+        chatBtn.onClick.AddListener(() => SceneManager.LoadScene("ChatbotMode"));
+
         // highlight defaults
         RefreshFilterVisuals();
         RefreshCards();

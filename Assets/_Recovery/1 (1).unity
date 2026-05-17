@@ -14785,6 +14785,7 @@ MonoBehaviour:
   contenedorPIP: {fileID: 1503688961}
   motorMediaPipe: {fileID: 1064799459}
   analisisPostura: {fileID: 1962531609}
+  renderTexturePIP: {fileID: 0}
 --- !u!114 &1962531607
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14841,6 +14842,11 @@ MonoBehaviour:
   colorFeedback: {r: 1, g: 1, b: 1, a: 1}
   cuerpoDetectado: 0
   tiempoInicio: 0
+  landmarksActivos: 
+  advertenciasPostura: 0
+  repeticionesRapidas: 0
+  audioSource: {fileID: 0}
+  sonidoError: {fileID: 0}
 --- !u!114 &1962531610
 MonoBehaviour:
   m_ObjectHideFlags: 0

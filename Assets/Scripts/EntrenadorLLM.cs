@@ -30,8 +30,12 @@ public class EntrenadorLLM : MonoBehaviour
 
     void Start()
     {
-        botonEnviar.onClick.AddListener(EnviarMensaje);
-        textoChat.text = $"<color={colorEntrenador}><b>Entrenador:</b> ¡Hola! ¿En qué nos enfocamos hoy?</color>\n";
+        // En ChatbotMode, las referencias se asignan después por InitChatbotScene,
+        // así que solo inicializamos si ya están conectadas (ej. ARMode con overlay)
+        if (botonEnviar != null)
+            botonEnviar.onClick.AddListener(EnviarMensaje);
+        if (textoChat != null)
+            textoChat.text = $"<color={colorEntrenador}><b>Entrenador:</b> ¡Hola! ¿En qué nos enfocamos hoy?</color>\n";
     }
 
     public void EnviarMensaje()
