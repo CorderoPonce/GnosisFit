@@ -177,6 +177,13 @@ public class SupervisionLayerManager : MonoBehaviour
                     controller.imageSize = new Vector2Int(ImageSourceProvider.ImageSource.textureWidth, ImageSourceProvider.ImageSource.textureHeight);
                     controller.InitScreen(ImageSourceProvider.ImageSource.textureWidth, ImageSourceProvider.ImageSource.textureHeight);
                     Debug.Log("[LayerManager] -> ImageSize forzada: " + controller.imageSize);
+
+                    // G. Fix Aspect Ratio using AspectRatioFitter
+                    var fitter = screenComp.GetComponent<UnityEngine.UI.AspectRatioFitter>();
+                    if (fitter == null) fitter = screenComp.gameObject.AddComponent<UnityEngine.UI.AspectRatioFitter>();
+                    fitter.aspectMode = UnityEngine.UI.AspectRatioFitter.AspectMode.EnvelopeParent;
+                    fitter.aspectRatio = (float)ImageSourceProvider.ImageSource.textureWidth / ImageSourceProvider.ImageSource.textureHeight;
+                    Debug.Log($"[LayerManager] -> AspectRatioFitter applied. Ratio: {fitter.aspectRatio}");
                 }
             }
 
@@ -261,7 +268,7 @@ public class SupervisionLayerManager : MonoBehaviour
                 current = current.parent;
             }
             
-            // Forzar estiramiento del Screen para ocupar toda la pantalla
+            // Forzar estiramiento del Screen pero sin offsets, el AspectRatioFitter hará el resto
             var rt = screen.GetComponent<RectTransform>();
             if (rt != null)
             {
@@ -298,4 +305,19 @@ public class SupervisionLayerManager : MonoBehaviour
     }
 
     public Canvas ObtenerCanvasMaestro() => _canvasHUD;
+
+    /// <summary>
+    /// Devuelve el Canvas del motor MediaPipe (donde se renderiza la cámara y las anotaciones).
+    /// Útil para dibujar el skeleton overlay directamente sobre la imagen de cámara.
+    /// </summary>
+    public Canvas ObtenerCanvasMediaPipe() => _canvasMediaPipeOriginal;
+
+    /// <summary>
+    /// Devuelve el RectTransform de la pantalla de MediaPipe, para alinear el SkeletonOverlay exactamente con la imagen.
+    /// </summary>
+    public RectTransform ObtenerPantallaMediaPipe()
+    {
+        var screenComp = Object.FindAnyObjectByType<Mediapipe.Unity.Screen>(FindObjectsInactive.Include);
+        return screenComp != null ? screenComp.GetComponent<RectTransform>() : null;
+    }
 }

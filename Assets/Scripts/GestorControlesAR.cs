@@ -10,7 +10,7 @@ public class GestorControlesAR : MonoBehaviour
 
     // Velocidades
     private int[] indicesVelocidad = { 1, 2, 3 };
-    private string[] nombresVelocidad = { "1.0x", "0.75x", "0.5x" };
+    private string[] nombresVelocidad = { "Normal", "Lento", "Muy Lento" };
     private TextMeshProUGUI textoVelocidadMain;
     private GameObject panelVelocidades;
     private bool velocidadesAbiertas = false;

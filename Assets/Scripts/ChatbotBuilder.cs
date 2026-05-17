@@ -70,12 +70,18 @@ public class ChatbotBuilder : MonoBehaviour
         placeholder.transform.SetParent(textArea.transform, false);
         var pText = placeholder.AddComponent<TextMeshProUGUI>();
         pText.text = "Escribe un mensaje..."; pText.color = Color.gray; pText.fontSize = 28;
+        pText.alignment = TextAlignmentOptions.Left;
+        RectTransform pRt = pText.GetComponent<RectTransform>();
+        pRt.anchorMin = Vector2.zero; pRt.anchorMax = Vector2.one; pRt.sizeDelta = Vector2.zero;
         inputField.placeholder = pText;
 
         GameObject textComp = new GameObject("InputText");
         textComp.transform.SetParent(textArea.transform, false);
         var iText = textComp.AddComponent<TextMeshProUGUI>();
-        iText.fontSize = 28;
+        iText.fontSize = 28; iText.color = Color.white;
+        iText.alignment = TextAlignmentOptions.Left;
+        RectTransform iRt = iText.GetComponent<RectTransform>();
+        iRt.anchorMin = Vector2.zero; iRt.anchorMax = Vector2.one; iRt.sizeDelta = Vector2.zero;
         inputField.textComponent = iText;
         inputField.textViewport = textRt;
 

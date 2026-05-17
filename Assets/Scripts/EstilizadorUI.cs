@@ -140,7 +140,7 @@ public class EstilizadorUI : MonoBehaviour
 
         // Texto del chat → color claro
         TextMeshProUGUI textoChat = BuscarTMPEnHijos(panelChat, "texto");
-        if (textoChat != null) textoChat.color = new Color(0.92f, 0.92f, 0.92f);
+        if (textoChat != null) textoChat.color = new Color(0f, 0f, 0f);
 
         // Botón X del chat → rojo
         EstilizarHijo(panelChat, "X",       COLOR_X_BTN, Color.white, true);

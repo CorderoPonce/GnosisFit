@@ -92,11 +92,7 @@ public class AnalisisPostura : MonoBehaviour
         Debug.Log($"[AnalisisPostura] Configurado: {tipo} | Umbrales: {umbralInferior}° - {umbralSuperior}°");
     }
 
-    void Awake()
-    {
-        // Empieza desactivado — se activa cuando el usuario entra en modo supervisión
-        enabled = false;
-    }
+
 
     private System.Collections.Concurrent.ConcurrentQueue<PoseLandmarkerResult> _resultadosCola = new System.Collections.Concurrent.ConcurrentQueue<PoseLandmarkerResult>();
 
@@ -254,9 +250,16 @@ public class AnalisisPostura : MonoBehaviour
         // Lado izquierdo: Hombro(11), Codo(13), Muñeca(15)
         float anguloIzq = CalcularAngulo(LM(cuerpo, 11), LM(cuerpo, 13), LM(cuerpo, 15));
 
-        // Usar el promedio de ambos brazos
-        float angulo = (anguloDer + anguloIzq) / 2f;
-        ProcesarRepConAngulo(angulo);
+        // Seleccionar el brazo que está realizando el curl (el que tiene el ángulo más cerrado)
+        // Para subir (contracción), el ángulo disminuye. Tomamos el mínimo.
+        // Para bajar (extensión), el ángulo aumenta. Para la máquina de estados, usamos el brazo más activo.
+        // En un curl de bicep normal, el brazo activo tendrá el ángulo más pequeño durante la contracción.
+        float anguloActivo = Mathf.Min(anguloDer, anguloIzq);
+        
+        // Pero si estamos en FaseRep.Bajando, nos interesa que el brazo activo vuelva a extenderse.
+        // Evaluamos el brazo que esté más doblado para que dicte el ritmo, o podemos simplemente usar el mínimo siempre,
+        // lo que significa que el brazo debe volver a extenderse (el mínimo debe superar el umbral superior).
+        ProcesarRepConAngulo(anguloActivo);
 
         // Feedback de forma
         if (anguloSuavizado > 150f)

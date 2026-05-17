@@ -27,6 +27,15 @@ public class InitSupervisionScene : MonoBehaviour
                 analisisPostura.enabled = true;
             }
         }
+        else
+        {
+            Debug.LogWarning("[SupervisionScene] Iniciando sin DataManager, asumiendo Bicep Curl.");
+            if (analisisPostura != null)
+            {
+                analisisPostura.ConfigurarEjercicio(TipoSupervision.BicepCurl);
+                analisisPostura.enabled = true;
+            }
+        }
 
         // Ocultar la UI de MediaPipe (Footer con botones de config que no sirven al usuario)
         OcultarUIMediaPipe();
@@ -53,6 +62,29 @@ public class InitSupervisionScene : MonoBehaviour
             var hud = canvas.gameObject.AddComponent<SupervisionHUD>();
             hud.Inicializar(canvas, analisisPostura, null, nombreEjercicio);
             Debug.Log("[SupervisionScene] HUD de supervisión creado.");
+
+            // 3. Crear el overlay de esqueleto sobre la pantalla de MediaPipe
+            //    (se coloca sobre la pantalla para respetar el AspectRatio)
+            var pantallaMediaPipe = layerManager.ObtenerPantallaMediaPipe();
+            if (pantallaMediaPipe != null)
+            {
+                var skeletonGO = new GameObject("SkeletonOverlay", typeof(RectTransform));
+                skeletonGO.transform.SetParent(pantallaMediaPipe, false);
+                
+                var rt = skeletonGO.GetComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+
+                var skeletonOverlay = skeletonGO.AddComponent<SkeletonOverlay>();
+                skeletonOverlay.Inicializar(canvas);
+                Debug.Log("[SupervisionScene] SkeletonOverlay creado sobre " + pantallaMediaPipe.name);
+            }
+            else
+            {
+                Debug.LogWarning("[SupervisionScene] No se encontró la pantalla de MediaPipe para el SkeletonOverlay.");
+            }
         }
         else
         {

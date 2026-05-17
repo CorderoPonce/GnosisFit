@@ -132,10 +132,11 @@ public class SupervisionHUD : MonoBehaviour
         rtFeedback.anchorMin = new Vector2(0.5f, 0.5f);
         rtFeedback.anchorMax = new Vector2(0.5f, 0.5f);
         rtFeedback.pivot = new Vector2(0.5f, 0.5f);
-        rtFeedback.sizeDelta = new Vector2(350, 60);
-        rtFeedback.anchoredPosition = new Vector2(0, -80);
+        rtFeedback.sizeDelta = new Vector2(800, 160); // Agrandado para la legibilidad
+        rtFeedback.anchoredPosition = new Vector2(0, -150);
 
-        textoFeedback = UIHelper.CrearTexto("Feedback", feedbackPanel.transform, "Preparándose...", 24, Color.white, FontStyles.Italic);
+        textoFeedback = UIHelper.CrearTexto("Feedback", feedbackPanel.transform, "Preparándose...", 60, Color.white, FontStyles.Italic);
+        textoFeedback.alignment = TextAlignmentOptions.Center; // Centrado para mayor claridad
         UIHelper.SetAnchorsStretch(textoFeedback.GetComponent<RectTransform>());
 
         // ── Botón Terminar ───────────────────────────────────────

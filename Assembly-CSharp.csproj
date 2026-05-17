@@ -53,6 +53,7 @@
     <Compile Include="Assets\MediaPipeUnity\Samples\UI\Scripts\ModalContents.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\EnvMapAnimator.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Common\Scripts\LegacySolutionRunner.cs" />
+    <Compile Include="Assets\Scripts\SupervisionDebugger.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Image Segmentation\ImageSegmentationConfig.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextSelector_A.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Hand Landmark Detection\HandLandmarkDetectionConfigWindow.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Face Detection\FaceDetectionConfigWindow.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Object Detection\ObjectDetectionConfig.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark02.cs" />
+    <Compile Include="Assets\Scripts\UIMenuCatalog.cs" />
     <Compile Include="Assets\MediaPipeUnity\Tutorial\Hello World\HelloWorld.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\External\FontAwesome\UnicodeInlineText.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Legacy\Holistic\HolisticTrackingConfig.cs" />
@@ -81,19 +83,27 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexZoom.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Image Segmentation\ImageSegmenterRunner.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextSelector_B.cs" />
+    <Compile Include="Assets\Scripts\GestorControlesAR.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\SkewTextExample.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\WarpTextExample.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ShaderPropAnimator.cs" />
     <Compile Include="Assets\MediaPipeUnity\Tutorial\Custom Graph\FaceMeshLegacy.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Face Landmark Detection\FaceLandmarkDetectionConfigWindow.cs" />
+    <Compile Include="Assets\Scripts\SupervisionHUD.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\UI\Scripts\ModalButton.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Face Landmark Detection\FaceLandmarkDetectionConfig.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Common\Scripts\ImageSource\ImageSourceType.cs" />
+    <Compile Include="Assets\Scripts\UIBuilderMenu.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\UI\Scripts\Modal.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextInfoDebugTool.cs" />
+    <Compile Include="Assets\Scripts\InitSupervisionScene.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeA.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Common\Scripts\AssetLoader.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Legacy\Holistic\HolisticTrackingSolution.cs" />
+    <Compile Include="Assets\Scripts\GestorCatalogoVisual.cs" />
+    <Compile Include="Assets\Scripts\ExerciseData.cs" />
+    <Compile Include="Assets\Scripts\GenosisFitDataManager.cs" />
+    <Compile Include="Assets\Scripts\DebugEnPantalla.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01_UGUI.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\SimpleScript.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Common\Scripts\GraphRunner.cs" />
@@ -104,18 +114,21 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_DigitValidator.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_FrameRateCounter.cs" />
     <Compile Include="Assets\Scripts\EntrenadorLLM.cs" />
+    <Compile Include="Assets\Scripts\SkeletonOverlay.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshSpawner.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Legacy\MediaPipe Video\MediaPipeVideoGraph.cs" />
+    <Compile Include="Assets\Scripts\ChatbotBuilder.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\CameraController.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Common\Scripts\ImageSource\VideoSource.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark03.cs" />
     <Compile Include="Assets\Scripts\EnlacesChat.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Hand Landmark Detection\HandLandmarkerRunner.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Face Landmark Detection\FaceLandmarkerRunner.cs" />
+    <Compile Include="Assets\Scripts\SupervisionLayerManager.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Object Detection\ObjectDetectionConfigWindows.cs" />
-    <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Pose Landmark Detection\PoseLandmarkDetectionConfigWindow.cs" />
     <Compile Include="Assets\Scripts\AnalisisPostura.cs" />
+    <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Pose Landmark Detection\PoseLandmarkDetectionConfigWindow.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Legacy\MediaPipe Video\MediaPipeVideoConfig.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Object Detection\ObjectDetectorRunner.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\DropdownSample.cs" />
@@ -125,6 +138,8 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ObjectSpin.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Face Detection\FaceDetectionConfig.cs" />
+    <Compile Include="Assets\Scripts\UIAutoFixer.cs" />
+    <Compile Include="Assets\Scripts\EstilizadorUI.cs" />
     <Compile Include="Assets\Scripts\GestorModoSupervision.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Common\Scripts\ImageSource\ImageSource.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextConsoleSimulator.cs" />
@@ -136,6 +151,8 @@
     <Compile Include="Assets\MediaPipeUnity\Samples\Common\Scripts\InferenceMode.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\UI\Scripts\AutoFit.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\UI\Scripts\ImageSourceConfig.cs" />
+    <Compile Include="Assets\Scripts\UIHelper.cs" />
+    <Compile Include="Assets\Scripts\NavegadorGlobal.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshProFloatingText.cs" />
     <Compile Include="Assets\Scripts\PlaceExample.cs" />
     <Compile Include="Assets\MediaPipeUnity\Samples\Scenes\Pose Landmark Detection\PoseLandmarkerRunner.cs" />
@@ -727,6 +744,10 @@
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
       <HintPath>Library\PackageCache\com.unity.visualscripting@8bed5ad90189\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64\Runtime\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Mono.Cecil">
@@ -1557,6 +1578,10 @@
       <HintPath>Library\ScriptAssemblies\Unity.2D.Psdimporter.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="MCPForUnity.Runtime">
+      <HintPath>Library\ScriptAssemblies\MCPForUnity.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Runtime">
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
       <Private>False</Private>
@@ -1589,8 +1614,8 @@
       <HintPath>Library\ScriptAssemblies\Unity.Collections.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.XR.OpenXR.Features.OculusQuestSupport">
-      <HintPath>Library\ScriptAssemblies\Unity.XR.OpenXR.Features.OculusQuestSupport.dll</HintPath>
+    <Reference Include="MCPForUnity.Editor">
+      <HintPath>Library\ScriptAssemblies\MCPForUnity.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.XR.OpenXR.Features.MetaQuestSupport.Editor">
@@ -1611,6 +1636,10 @@
     </Reference>
     <Reference Include="Unity.XR.ARKit.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.XR.ARKit.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.XR.OpenXR.Features.OculusQuestSupport">
+      <HintPath>Library\ScriptAssemblies\Unity.XR.OpenXR.Features.OculusQuestSupport.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Multiplayer.Center.Common">

@@ -59,7 +59,8 @@ public class EntrenadorLLM : MonoBehaviour
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
-        request.timeout = 30; 
+        request.SetRequestHeader("ngrok-skip-browser-warning", "true");
+        request.timeout = 120; // Llama3 puede tardar en responder, especialmente en la primera invocación
 
         yield return request.SendWebRequest();
 
@@ -72,7 +73,25 @@ public class EntrenadorLLM : MonoBehaviour
         }
         else
         {
-            textoChat.text += "<color=red>Error de conexión con la IA.</color>\n";
+            // Logging detallado para diagnóstico
+            string errorDetalle = $"HTTP {request.responseCode} | {request.result} | {request.error}";
+            Debug.LogError($"[EntrenadorLLM] Error de conexión: {errorDetalle}");
+            Debug.LogError($"[EntrenadorLLM] URL: {urlOllama}");
+            if (request.downloadHandler != null && !string.IsNullOrEmpty(request.downloadHandler.text))
+                Debug.LogError($"[EntrenadorLLM] Response Body: {request.downloadHandler.text}");
+
+            // Mensaje descriptivo para el usuario según el tipo de error
+            string mensajeError;
+            if (request.result == UnityWebRequest.Result.ConnectionError)
+                mensajeError = "No se pudo conectar con el servidor. Verifica que Ngrok y Ollama estén corriendo.";
+            else if (request.responseCode == 0)
+                mensajeError = "Timeout: El servidor tardó demasiado en responder. Intenta de nuevo.";
+            else if (request.responseCode == 502 || request.responseCode == 503)
+                mensajeError = $"Servidor no disponible (HTTP {request.responseCode}). ¿Está Ollama corriendo?";
+            else
+                mensajeError = $"Error de conexión (HTTP {request.responseCode}). Revisa la consola para más detalles.";
+
+            textoChat.text += $"<color=red>{mensajeError}</color>\n";
         }
 
         botonEnviar.interactable = true;
