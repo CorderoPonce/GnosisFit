@@ -29,7 +29,7 @@ public class SupervisionHUD : MonoBehaviour
     private static readonly Color BARRA_BG = new Color(0.2f, 0.2f, 0.3f, 0.8f);
     private static readonly Color BARRA_FILL = new Color(0.2f, 0.8f, 1f);
 
-    private string urlOllama = "http://localhost:11434/api/generate";
+    private string urlOllama = "https://imply-perjury-yahoo.ngrok-free.dev/api/generate";
     private string nombreModelo = "llama3";
 
     public void Inicializar(Canvas canvas, AnalisisPostura analisisRef, GestorModoSupervision gestorRef, string nombreEjercicio)
@@ -173,30 +173,30 @@ public class SupervisionHUD : MonoBehaviour
         panelResumen.SetActive(false);
     }
 
-    private void ActualizarVista()
-    {
-        if (analisis == null || panelPrincipal == null || !panelPrincipal.activeSelf) return;
+    private void ActualizarVista(){
+            if (analisis == null || panelPrincipal == null || !panelPrincipal.activeSelf) return;
 
-        // CORRECCIÓN DE SEGURIDAD: Re-vincular textura si por alguna razón no se asignó en el primer frame
-        if (rawImgPIP != null && rawImgPIP.texture == null && gestorSupervision != null && gestorSupervision.renderTexturePIP != null) {
-            rawImgPIP.texture = gestorSupervision.renderTexturePIP;
-        }
+            // SOLUCIÓN RÁPIDA: Apagamos el panel padre de la imagen para ocultar la caja blanca
+            if (rawImgPIP != null) 
+            {
+                rawImgPIP.transform.parent.gameObject.SetActive(false);
+            }
 
-        textoReps.text = analisis.repeticiones.ToString();
+            textoReps.text = analisis.repeticiones.ToString();
 
-        if (analisis.ejercicioActual == TipoSupervision.Plank)
-            textoAngulo.text = $"Tiempo: {(Time.time - analisis.tiempoInicio):F0}s";
-        else if (analisis.ejercicioActual == TipoSupervision.JumpingJack)
-            textoAngulo.text = $"Apertura: {analisis.anguloActual:F0}%";
-        else
-            textoAngulo.text = $"Ángulo: {analisis.anguloActual:F0}°";
+            if (analisis.ejercicioActual == TipoSupervision.Plank)
+                textoAngulo.text = $"Tiempo: {(Time.time - analisis.tiempoInicio):F0}s";
+            else if (analisis.ejercicioActual == TipoSupervision.JumpingJack)
+                textoAngulo.text = $"Apertura: {analisis.anguloActual:F0}%";
+            else
+                textoAngulo.text = $"Ángulo: {analisis.anguloActual:F0}°";
 
-        var rtFill = barraProgreso.GetComponent<RectTransform>();
-        rtFill.anchorMax = new Vector2(analisis.progreso, 1);
-        barraProgreso.color = Color.Lerp(BARRA_FILL, ACCENT_GREEN, analisis.progreso);
+            var rtFill = barraProgreso.GetComponent<RectTransform>();
+            rtFill.anchorMax = new Vector2(analisis.progreso, 1);
+            barraProgreso.color = Color.Lerp(BARRA_FILL, ACCENT_GREEN, analisis.progreso);
 
-        textoFeedback.text = analisis.feedback;
-        textoFeedback.color = analisis.colorFeedback;
+            textoFeedback.text = analisis.feedback;
+            textoFeedback.color = analisis.colorFeedback;
     }
 
     private void OnRepCompletada()
@@ -247,7 +247,8 @@ public class SupervisionHUD : MonoBehaviour
         request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(peticion)));
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
-        request.timeout = 5; 
+        request.SetRequestHeader("ngrok-skip-browser-warning", "true");
+        request.timeout = 20; 
 
         yield return request.SendWebRequest();
 
