@@ -17,10 +17,11 @@ public class EstilizadorUI : MonoBehaviour
     static readonly Color COLOR_BOTON_CONFIG    = new Color(0.18f, 0.18f, 0.24f, 1f);    // Card oscura
     static readonly Color COLOR_BOTON_CONFIG_TX = new Color(0.95f, 0.95f, 0.95f, 1f);    // Texto claro
     static readonly Color COLOR_X_BTN           = new Color(0.9f,  0.25f, 0.25f, 1f);    // Rojo suave
-    static readonly Color COLOR_CHAT_HEADER     = new Color(0.07f, 0.07f, 0.12f, 0.98f);
-    static readonly Color COLOR_CHAT_BG         = new Color(0.12f, 0.12f, 0.18f, 0.96f);
+    static readonly Color COLOR_CHAT_HEADER     = new Color(0.06f, 0.06f, 0.10f, 1f);
+    static readonly Color COLOR_CHAT_BG         = new Color(0.12f, 0.12f, 0.18f, 1f);
     static readonly Color COLOR_ENVIAR          = new Color(0.00f, 0.75f, 0.65f, 1f);
-    static readonly Color COLOR_INPUT_BG        = new Color(0.20f, 0.20f, 0.26f, 1f);
+    static readonly Color COLOR_INPUT_BG        = new Color(0.18f, 0.18f, 0.24f, 1f);
+    static readonly Color COLOR_TEXT_WHITE      = new Color(0.95f, 0.95f, 0.95f, 1f);
 
     void Start()
     {
@@ -135,12 +136,12 @@ public class EstilizadorUI : MonoBehaviour
         // Buscar elementos internos por nombre
         EstilizarHijo(panelChat, "Header",    COLOR_CHAT_HEADER, Color.white, true);
         EstilizarHijo(panelChat, "Enviar",    COLOR_ENVIAR,      Color.white, true);
-        EstilizarHijo(panelChat, "InputField",COLOR_INPUT_BG,    new Color(0.9f, 0.9f, 0.9f), false);
-        EstilizarHijo(panelChat, "Input",     COLOR_INPUT_BG,    new Color(0.9f, 0.9f, 0.9f), false);
+        EstilizarHijo(panelChat, "InputField",COLOR_INPUT_BG,    new Color(0.9f, 0.9f, 0.9f), false, true);
+        EstilizarHijo(panelChat, "Input",     COLOR_INPUT_BG,    new Color(0.9f, 0.9f, 0.9f), false, true);
 
-        // Texto del chat → color claro
+        // Texto del chat → color claro para que contraste con el fondo oscuro
         TextMeshProUGUI textoChat = BuscarTMPEnHijos(panelChat, "texto");
-        if (textoChat != null) textoChat.color = new Color(0f, 0f, 0f);
+        if (textoChat != null) textoChat.color = COLOR_TEXT_WHITE;
 
         // Botón X del chat → rojo
         EstilizarHijo(panelChat, "X",       COLOR_X_BTN, Color.white, true);
@@ -150,17 +151,19 @@ public class EstilizadorUI : MonoBehaviour
     // ─────────────────────────────────────────────
     // UTILIDADES
     // ─────────────────────────────────────────────
-    void EstilizarHijo(GameObject padre, string nombreParcial, Color bgColor, Color txColor, bool negrita)
+    void EstilizarHijo(GameObject padre, string nombreParcial, Color bgColor, Color txColor, bool negrita, bool addPadding = false)
     {
         Transform hijo = BuscarHijoPorNombreParcial(padre.transform, nombreParcial);
         if (hijo == null) return;
         Image img = hijo.GetComponent<Image>();
         if (img != null) img.color = bgColor;
-        TextMeshProUGUI tmp = hijo.GetComponentInChildren<TextMeshProUGUI>();
-        if (tmp != null)
+        
+        // Aplicar a TODOS los TMP hijos (para InputFields asegura pintar tanto el Placeholder como el Text)
+        foreach (TextMeshProUGUI tmp in hijo.GetComponentsInChildren<TextMeshProUGUI>(true))
         {
             tmp.color = txColor;
             if (negrita) tmp.fontStyle = FontStyles.Bold;
+            if (addPadding) tmp.margin = new Vector4(15, 0, 15, 0);
         }
     }
 
