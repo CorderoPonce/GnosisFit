@@ -176,10 +176,11 @@ public class SupervisionHUD : MonoBehaviour
     private void ActualizarVista(){
             if (analisis == null || panelPrincipal == null || !panelPrincipal.activeSelf) return;
 
-            // SOLUCIÓN RÁPIDA: Apagamos el panel padre de la imagen para ocultar la caja blanca
+            // Activamos el panel Picture-in-Picture solo si hay una textura 3D PIP asignada
             if (rawImgPIP != null) 
             {
-                rawImgPIP.transform.parent.gameObject.SetActive(false);
+                bool tieneTextura = rawImgPIP.texture != null;
+                rawImgPIP.transform.parent.gameObject.SetActive(tieneTextura);
             }
 
             textoReps.text = analisis.repeticiones.ToString();

@@ -8,6 +8,10 @@ public class GestorModoSupervision : MonoBehaviour
     public ARCameraManager cameraManager;
     public PlaceExample scriptPlaceExample;
 
+    [Header("Modelos y Animaciones 3D")]
+    public GameObject[] avataresPrefabs; 
+    public RuntimeAnimatorController[] ejerciciosControllers;
+
     [Header("UI y PIP")]
     public GameObject panelSupervisionUI;
     public Transform contenedorPIP;
@@ -28,7 +32,10 @@ public class GestorModoSupervision : MonoBehaviour
     private void Awake()
     {
         _layerManager = GetComponent<SupervisionLayerManager>() ?? gameObject.AddComponent<SupervisionLayerManager>();
-        _layerManager.motorMediaPipe = motorMediaPipe;
+        if (motorMediaPipe != null)
+        {
+            _layerManager.motorMediaPipe = motorMediaPipe;
+        }
 
         var btn = GameObject.Find("BotonCamara")?.GetComponent<UnityEngine.UI.Button>();
         if (btn != null) { btn.onClick.RemoveAllListeners(); btn.onClick.AddListener(AlternarModoSupervision); }
@@ -78,10 +85,11 @@ public class GestorModoSupervision : MonoBehaviour
 
         if (camaraPIP == null) {
             GameObject camObj = new GameObject("CamaraPIP");
-            camObj.transform.position = contenedorPIP.position + new Vector3(0, 1.2f, 2.8f);
-            camObj.transform.LookAt(contenedorPIP.position + new Vector3(0, 1f, 0));
+            camObj.transform.position = contenedorPIP.position + new Vector3(0f, 0.75f, 1.8f); // Lowered camera height to shift character upwards in the viewport
+            camObj.transform.LookAt(contenedorPIP.position + new Vector3(0f, 0.45f, 0f)); // Aimed lower (thighs/knees level) to center the crouching squat motion vertically
             
             camaraPIP = camObj.AddComponent<Camera>();
+            camaraPIP.fieldOfView = 45f; // Zoomed field of view (45 instead of default 60)
             camaraPIP.targetTexture = renderTexturePIP;
             camaraPIP.clearFlags = CameraClearFlags.SolidColor;
             camaraPIP.backgroundColor = new Color(0, 0, 0, 0); 
@@ -104,15 +112,18 @@ public class GestorModoSupervision : MonoBehaviour
             idEjercicio = GenosisFitDataManager.Instance.IndiceEjercicio;
         }
 
-        if (scriptPlaceExample == null || scriptPlaceExample.avataresPrefabs == null || scriptPlaceExample.avataresPrefabs.Length == 0) return;
-        if (_clonPIPActual != null) Destroy(_clonPIPActual);
-        if (idPersonaje >= scriptPlaceExample.avataresPrefabs.Length) idPersonaje = 0;
+        GameObject[] prefabsToUse = (scriptPlaceExample != null) ? scriptPlaceExample.avataresPrefabs : avataresPrefabs;
+        RuntimeAnimatorController[] controllersToUse = (scriptPlaceExample != null) ? scriptPlaceExample.ejerciciosControllers : ejerciciosControllers;
 
-        _clonPIPActual = Instantiate(scriptPlaceExample.avataresPrefabs[idPersonaje], contenedorPIP.position, contenedorPIP.rotation);
+        if (prefabsToUse == null || prefabsToUse.Length == 0) return;
+        if (_clonPIPActual != null) Destroy(_clonPIPActual);
+        if (idPersonaje >= prefabsToUse.Length) idPersonaje = 0;
+
+        _clonPIPActual = Instantiate(prefabsToUse[idPersonaje], contenedorPIP.position, contenedorPIP.rotation);
 
         var animator = _clonPIPActual.GetComponent<Animator>();
-        if (animator != null && scriptPlaceExample.ejerciciosControllers != null && idEjercicio < scriptPlaceExample.ejerciciosControllers.Length) {
-            animator.runtimeAnimatorController = scriptPlaceExample.ejerciciosControllers[idEjercicio];
+        if (animator != null && controllersToUse != null && idEjercicio < controllersToUse.Length) {
+            animator.runtimeAnimatorController = controllersToUse[idEjercicio];
         }
 
         CambiarCapaRecursivo(_clonPIPActual.transform, 4);
