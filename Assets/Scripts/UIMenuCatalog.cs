@@ -22,6 +22,12 @@ public class UIMenuCatalog : MonoBehaviour
     private List<Button> muscleButtons = new List<Button>();
     private List<Button> diffButtons = new List<Button>();
 
+    // ── database & tracking ──
+    private CharacterDatabase characterDb;
+    private List<GameObject> spawnedContainers = new List<GameObject>();
+    private List<RenderTexture> spawnedRenderTextures = new List<RenderTexture>();
+    private List<Transform> thumbnailClones = new List<Transform>();
+
     // ── design tokens ──
     static readonly Color BG        = new Color(0.96f, 0.96f, 0.96f);
     static readonly Color CARD_BG   = Color.white;
@@ -36,7 +42,24 @@ public class UIMenuCatalog : MonoBehaviour
     void Start()
     {
         allExercises = ExerciseData.ObtenerCatalogo().ToList();
+        characterDb = Resources.Load<CharacterDatabase>("CharacterDatabase");
         BuildUI();
+    }
+
+    void OnDestroy()
+    {
+        foreach (var container in spawnedContainers)
+        {
+            if (container != null) Destroy(container);
+        }
+        foreach (var rt in spawnedRenderTextures)
+        {
+            if (rt != null)
+            {
+                rt.Release();
+                Destroy(rt);
+            }
+        }
     }
 
     // ════════════════════════════════════════
@@ -189,6 +212,24 @@ public class UIMenuCatalog : MonoBehaviour
 
     void RefreshCards()
     {
+        // Limpiar recursos 3D de las miniaturas anteriores para evitar fugas de VRAM
+        foreach (var container in spawnedContainers)
+        {
+            if (container != null) Destroy(container);
+        }
+        spawnedContainers.Clear();
+
+        foreach (var rt in spawnedRenderTextures)
+        {
+            if (rt != null)
+            {
+                rt.Release();
+                Destroy(rt);
+            }
+        }
+        spawnedRenderTextures.Clear();
+        thumbnailClones.Clear();
+
         // clear
         for (int i = contentParent.childCount - 1; i >= 0; i--)
             Destroy(contentParent.GetChild(i).gameObject);
@@ -226,12 +267,18 @@ public class UIMenuCatalog : MonoBehaviour
         shadow.effectDistance = new Vector2(0, -3);
 
         // ── Image placeholder ──
-        var imgGO = CreatePanel(card.transform, "ImgPlaceholder", IMG_PH);
+        var imgGO = CreatePanel(card.transform, "ImgPlaceholder", new Color(0.9f, 0.92f, 0.95f, 1f)); // Light steel-blue background
         AddLE(imgGO, minW: 160, minH: 160);
-        // Icon text
-        var icon = CreateTMP(imgGO.transform, "🏋", 60,
-            TXT_GRAY, FontStyles.Normal, TextAlignmentOptions.Center);
-        Stretch(icon.gameObject);
+        imgGO.AddComponent<RectMask2D>(); // Clip the 3D model cleanly
+
+        // 3D Thumbnail RawImage
+        var rawImgGO = new GameObject("Thumbnail3D", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+        rawImgGO.transform.SetParent(imgGO.transform, false);
+        Stretch(rawImgGO);
+        var rawImg = rawImgGO.GetComponent<RawImage>();
+
+        // Configurar la vista previa en 3D
+        ConfigurarPreview3D(rawImg, data.idControlador);
 
         // ── Info column ──
         var infoGO = CreatePanel(card.transform, "InfoCol",
@@ -453,5 +500,81 @@ public class UIMenuCatalog : MonoBehaviour
         sr.content = cRT;
 
         return content.transform;
+    }
+
+    private void ConfigurarPreview3D(RawImage rawImg, int idEjercicio)
+    {
+        if (characterDb == null || characterDb.avataresPrefabs == null || characterDb.avataresPrefabs.Length == 0)
+        {
+            // Fallback: mostrar emoji si la base de datos de personajes no está disponible
+            var fallbackGO = new GameObject("FallbackEmoji", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            fallbackGO.transform.SetParent(rawImg.transform, false);
+            Stretch(fallbackGO);
+            var tmp = fallbackGO.GetComponent<TextMeshProUGUI>();
+            tmp.text = "🏋";
+            tmp.fontSize = 50;
+            tmp.color = TXT_GRAY;
+            tmp.alignment = TextAlignmentOptions.Center;
+            return;
+        }
+
+        // 1. Crear RenderTexture ultra liviana (128x128) para un excelente rendimiento móvil
+        RenderTexture rt = new RenderTexture(128, 128, 16, RenderTextureFormat.ARGB32);
+        rt.Create();
+        rawImg.texture = rt;
+        spawnedRenderTextures.Add(rt);
+
+        // 2. Colocar cada avatar en una coordenada horizontal única para evitar solapamientos visuales en el renderizado
+        float offsetUnit = idEjercicio * 15f;
+        Vector3 posClon = new Vector3(offsetUnit, -2000f, 0f);
+
+        // 3. Crear contenedor del clon
+        GameObject contenedor = new GameObject("ContenedorPreview_" + idEjercicio);
+        contenedor.transform.position = posClon;
+        spawnedContainers.Add(contenedor);
+
+        // 4. Instanciar avatar base
+        GameObject clon = Instantiate(characterDb.avataresPrefabs[0], posClon, Quaternion.identity, contenedor.transform);
+        clon.name = "Clon_" + idEjercicio;
+        clon.transform.rotation = Quaternion.Euler(0f, 140f, 0f); // Ángulo 3/4 inicial
+        thumbnailClones.Add(clon.transform);
+
+        // 5. Configurar animación del ejercicio correspondiente
+        var animator = clon.GetComponent<Animator>();
+        int controllerIndex = idEjercicio;
+        if (controllerIndex < 0 || characterDb.ejerciciosControllers == null || controllerIndex >= characterDb.ejerciciosControllers.Length)
+        {
+            controllerIndex = 0;
+        }
+
+        if (animator != null && characterDb.ejerciciosControllers != null && characterDb.ejerciciosControllers.Length > 0)
+        {
+            animator.runtimeAnimatorController = characterDb.ejerciciosControllers[controllerIndex];
+        }
+
+        // 6. Crear Cámara y apuntarla al torso del avatar
+        GameObject camObj = new GameObject("CamaraPreview_" + idEjercicio, typeof(Camera));
+        camObj.transform.SetParent(contenedor.transform, false);
+        camObj.transform.localPosition = new Vector3(0f, 0.55f, 2.2f); // Lowered camera height to shift character upwards
+        camObj.transform.LookAt(posClon + new Vector3(0f, 0.35f, 0f)); // Aimed lower (waist/thighs level) to center both standing and floor postures
+
+        Camera cam = camObj.GetComponent<Camera>();
+        cam.fieldOfView = 30f; // Narrowed Field of View (from 40f to 30f) to zoom in the 3D model by 30%
+        cam.targetTexture = rt;
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.9f, 0.92f, 0.95f, 1f); // Fondo azul metálico claro premium (cohesivo con el tema claro)
+    }
+
+    void Update()
+    {
+        // Rotar lentamente todos los avatares miniatura para dar un efecto interactivo premium
+        float speed = 20f * Time.deltaTime;
+        foreach (var clone in thumbnailClones)
+        {
+            if (clone != null)
+            {
+                clone.Rotate(Vector3.up, speed, Space.World);
+            }
+        }
     }
 }

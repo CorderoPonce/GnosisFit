@@ -8,7 +8,10 @@ public class GestorModoSupervision : MonoBehaviour
     public ARCameraManager cameraManager;
     public PlaceExample scriptPlaceExample;
 
-    [Header("Modelos y Animaciones 3D")]
+    [Header("Base de Datos Centralizada")]
+    public CharacterDatabase database;
+
+    [Header("Compatibilidad Local (Será sobrescrita por Base de Datos si está disponible)")]
     public GameObject[] avataresPrefabs; 
     public RuntimeAnimatorController[] ejerciciosControllers;
 
@@ -35,6 +38,21 @@ public class GestorModoSupervision : MonoBehaviour
         if (motorMediaPipe != null)
         {
             _layerManager.motorMediaPipe = motorMediaPipe;
+        }
+
+        // Cargar base de datos centralizada de forma segura
+        if (database == null)
+        {
+            database = Resources.Load<CharacterDatabase>("CharacterDatabase");
+        }
+
+        // Sincronizar arrays locales con la base de datos central para mantener compatibilidad total
+        if (database != null)
+        {
+            if (database.avataresPrefabs != null && database.avataresPrefabs.Length > 0)
+                avataresPrefabs = database.avataresPrefabs;
+            if (database.ejerciciosControllers != null && database.ejerciciosControllers.Length > 0)
+                ejerciciosControllers = database.ejerciciosControllers;
         }
 
         var btn = GameObject.Find("BotonCamara")?.GetComponent<UnityEngine.UI.Button>();
@@ -84,12 +102,30 @@ public class GestorModoSupervision : MonoBehaviour
         }
 
         if (camaraPIP == null) {
+            // Buscar los parámetros de cámara específicos para el ejercicio seleccionado
+            ExerciseData datosEj = null;
+            if (GenosisFitDataManager.Instance != null && !string.IsNullOrEmpty(GenosisFitDataManager.Instance.EjercicioSeleccionado))
+            {
+                foreach (var ej in ExerciseData.ObtenerCatalogo())
+                {
+                    if (ej.nombre == GenosisFitDataManager.Instance.EjercicioSeleccionado)
+                    {
+                        datosEj = ej;
+                        break;
+                    }
+                }
+            }
+
+            Vector3 offset = (datosEj != null) ? datosEj.offsetCamara : new Vector3(0f, 0.75f, 1.8f);
+            Vector3 target = (datosEj != null) ? datosEj.targetCamara : new Vector3(0f, 0.45f, 0f);
+            float fov = (datosEj != null) ? datosEj.fovCamara : 45f;
+
             GameObject camObj = new GameObject("CamaraPIP");
-            camObj.transform.position = contenedorPIP.position + new Vector3(0f, 0.75f, 1.8f); // Lowered camera height to shift character upwards in the viewport
-            camObj.transform.LookAt(contenedorPIP.position + new Vector3(0f, 0.45f, 0f)); // Aimed lower (thighs/knees level) to center the crouching squat motion vertically
+            camObj.transform.position = contenedorPIP.position + offset;
+            camObj.transform.LookAt(contenedorPIP.position + target);
             
             camaraPIP = camObj.AddComponent<Camera>();
-            camaraPIP.fieldOfView = 45f; // Zoomed field of view (45 instead of default 60)
+            camaraPIP.fieldOfView = fov;
             camaraPIP.targetTexture = renderTexturePIP;
             camaraPIP.clearFlags = CameraClearFlags.SolidColor;
             camaraPIP.backgroundColor = new Color(0, 0, 0, 0); 
