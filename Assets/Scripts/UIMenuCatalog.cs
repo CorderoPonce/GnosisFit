@@ -96,11 +96,11 @@ public class UIMenuCatalog : MonoBehaviour
         // ── Title ──
         var titleBar = CreatePanel(bg.transform, "TitleBar", BG);
         AddLE(titleBar, minH: 100);
+        
         var titleTxt = CreateTMP(titleBar.transform,
             "Gnosis Fit", 54, TXT_DARK, FontStyles.Bold,
             TextAlignmentOptions.Center);
         Stretch(titleTxt.gameObject);
-
         // ── Filter Section ──
         var filterSection = CreatePanel(bg.transform, "Filters", BG);
         AddLE(filterSection, minH: 140);

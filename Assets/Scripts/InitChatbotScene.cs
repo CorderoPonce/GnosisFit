@@ -145,6 +145,7 @@ public class InitChatbotScene : MonoBehaviour
         // Texto del chat
         var chatTextGO = new GameObject("ChatText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         chatTextGO.transform.SetParent(content.transform, false);
+        chatTextGO.AddComponent<EnlacesChat>();
         var chatText = chatTextGO.GetComponent<TextMeshProUGUI>();
         chatText.fontSize = 30;
         chatText.color = TEXT_WHITE;

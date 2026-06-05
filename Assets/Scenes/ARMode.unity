@@ -9501,7 +9501,7 @@ MonoBehaviour:
   textoChat: {fileID: 1066627583}
   botonEnviar: {fileID: 1407375464}
   scrollChat: {fileID: 645979729}
-  urlOllama: https://imply-perjury-yahoo.ngrok-free.dev/api/generate
+  urlOllama: https://gloomily-disparity-evoke.ngrok-free.dev/api/generate
   nombreModelo: llama3
 --- !u!4 &1731515873
 Transform:

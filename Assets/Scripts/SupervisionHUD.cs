@@ -29,7 +29,7 @@ public class SupervisionHUD : MonoBehaviour
     private static readonly Color BARRA_BG = new Color(0.2f, 0.2f, 0.3f, 0.8f);
     private static readonly Color BARRA_FILL = new Color(0.2f, 0.8f, 1f);
 
-    private string urlOllama = "https://imply-perjury-yahoo.ngrok-free.dev/api/generate";
+    private string urlOllama = "https://gloomily-disparity-evoke.ngrok-free.dev/api/generate";
     private string nombreModelo = "llama3";
 
     public void Inicializar(Canvas canvas, AnalisisPostura analisisRef, GestorModoSupervision gestorRef, string nombreEjercicio)

@@ -43,8 +43,15 @@ namespace Mediapipe.Unity.Sample
     public override void Stop()
     {
       base.Stop();
-      StopCoroutine(_coroutine);
-      ImageSourceProvider.ImageSource.Stop();
+      if (_coroutine != null)
+      {
+        StopCoroutine(_coroutine);
+        _coroutine = null;
+      }
+      if (ImageSourceProvider.ImageSource != null)
+      {
+        ImageSourceProvider.ImageSource.Stop();
+      }
       taskApi?.Close();
       taskApi = null;
     }
