@@ -91,6 +91,10 @@ public class AnalisisPostura : MonoBehaviour
                 umbralInferior = 0.15f; umbralSuperior = 0.4f;
                 vistaRequerida = VistaRequerida.Frente;
                 break;
+            case TipoSupervision.SaltosCruzados:
+                umbralInferior = 0.15f; umbralSuperior = 0.4f;
+                vistaRequerida = VistaRequerida.Frente;
+                break;
             case TipoSupervision.Burpee:
                 umbralInferior = 90f; umbralSuperior = 150f;
                 vistaRequerida = VistaRequerida.Perfil;
@@ -152,21 +156,35 @@ public class AnalisisPostura : MonoBehaviour
         // NUEVO: 1. Validación de Ángulo de Cámara
         if (vistaRequerida != VistaRequerida.Cualquiera)
         {
-            float distHombros = Mathf.Abs(cuerpo[11].x - cuerpo[12].x);
-            bool esPerfil = distHombros < 0.12f; // Hombros superpuestos
-            bool esFrente = distHombros > 0.18f; // Hombros separados
+            float distHombros = Vector2.Distance(LM(cuerpo, 11), LM(cuerpo, 12));
+            float distCaderas = Vector2.Distance(LM(cuerpo, 23), LM(cuerpo, 24));
+            
+            // Calculamos el largo del torso en pantalla para normalizar por la distancia del usuario
+            Vector2 hombroMedio = (LM(cuerpo, 11) + LM(cuerpo, 12)) / 2f;
+            Vector2 caderaMedia = (LM(cuerpo, 23) + LM(cuerpo, 24)) / 2f;
+            float largoTorso = Vector2.Distance(hombroMedio, caderaMedia);
+            if (largoTorso < 0.05f) largoTorso = 0.1f; // Evitar división por cero o ruido extremo
 
-            if (vistaRequerida == VistaRequerida.Perfil && !esPerfil)
+            float relacionHombros = distHombros / largoTorso;
+            float relacionCaderas = distCaderas / largoTorso;
+
+            // Detección altamente tolerante para evitar bloqueos por distancia o relación de aspecto:
+            // Frente: los hombros o las caderas están ensanchados horizontalmente o la distancia absoluta es suficiente
+            bool esFrente = relacionHombros > 0.38f || relacionCaderas > 0.28f || distHombros > 0.08f || distCaderas > 0.06f;
+            // Perfil: tanto hombros como caderas están extremadamente comprimidos en el eje X (escala independiente)
+            bool esPerfil = relacionHombros < 0.24f && relacionCaderas < 0.18f;
+
+            if (vistaRequerida == VistaRequerida.Perfil && esFrente)
             {
                 feedback = "Gírate y colócate de PERFIL a la cámara";
                 colorFeedback = Color.red;
-                return; // Bloquea el análisis hasta que se voltee
+                return; // Bloquea el análisis si está claramente de frente
             }
-            else if (vistaRequerida == VistaRequerida.Frente && !esFrente)
+            else if (vistaRequerida == VistaRequerida.Frente && esPerfil)
             {
                 feedback = "Gírate y colócate de FRENTE a la cámara";
                 colorFeedback = Color.red;
-                return;
+                return; // Bloquea el análisis si está claramente de perfil
             }
         }
 
@@ -179,6 +197,7 @@ public class AnalisisPostura : MonoBehaviour
             case TipoSupervision.Situp:        EvaluarSitup(cuerpo);        break;
             case TipoSupervision.Burpee:       EvaluarBurpee(cuerpo);       break;
             case TipoSupervision.Plank:        EvaluarPlank(cuerpo);        break;
+            case TipoSupervision.SaltosCruzados: EvaluarSaltosCruzados(cuerpo); break;
             default:                           EvaluarGeneric();            break;
         }
 
@@ -255,10 +274,17 @@ public class AnalisisPostura : MonoBehaviour
         float anguloActivo = Mathf.Min(CalcularAngulo(LM(cuerpo, 12), LM(cuerpo, 14), LM(cuerpo, 16)), CalcularAngulo(LM(cuerpo, 11), LM(cuerpo, 13), LM(cuerpo, 15)));
         ProcesarRepConAngulo(anguloActivo);
 
-        if (anguloSuavizado > 150f) { feedback = "Brazo extendido — ¡Sube!"; colorFeedback = Color.white; }
-        else if (anguloSuavizado < 45f) { feedback = "¡Buena contracción!"; colorFeedback = Color.green; }
-        else if (anguloSuavizado < 90f) { feedback = "¡Sigue subiendo!"; colorFeedback = new Color(0.2f, 0.8f, 1f); }
-        else { feedback = "Bajando..."; colorFeedback = Color.yellow; }
+        if (faseActual == FaseRep.Inicio)
+        {
+            if (anguloSuavizado > 140f) { feedback = "Brazo extendido — ¡Sube!"; colorFeedback = Color.white; }
+            else if (anguloSuavizado < 90f) { feedback = "¡Sigue subiendo!"; colorFeedback = new Color(0.2f, 0.8f, 1f); }
+            else { feedback = "¡Sube con fuerza!"; colorFeedback = new Color(0.2f, 0.8f, 1f); }
+        }
+        else // FaseRep.Bajando (retorno controlado)
+        {
+            if (anguloSuavizado < 50f) { feedback = "¡Buena contracción!"; colorFeedback = Color.green; }
+            else { feedback = "Baja el peso controlado"; colorFeedback = Color.cyan; }
+        }
     }
 
     private void EvaluarAirSquat(IList<NormalizedLandmark> cuerpo)
@@ -267,10 +293,17 @@ public class AnalisisPostura : MonoBehaviour
         float angulo = (CalcularAngulo(LM(cuerpo, 24), LM(cuerpo, 26), LM(cuerpo, 28)) + CalcularAngulo(LM(cuerpo, 23), LM(cuerpo, 25), LM(cuerpo, 27))) / 2f;
         ProcesarRepConAngulo(angulo);
 
-        if (anguloSuavizado > 160f) { feedback = "De pie — ¡Baja!"; colorFeedback = Color.white; }
-        else if (anguloSuavizado < 90f) { feedback = "¡Excelente profundidad!"; colorFeedback = Color.green; }
-        else if (anguloSuavizado < 110f) { feedback = "Buena sentadilla"; colorFeedback = new Color(0.5f, 1f, 0.5f); }
-        else { feedback = "Baja más la cadera"; colorFeedback = Color.yellow; }
+        if (faseActual == FaseRep.Inicio)
+        {
+            if (anguloSuavizado > 155f) { feedback = "De pie — ¡Baja!"; colorFeedback = Color.white; }
+            else if (anguloSuavizado < 100f) { feedback = "Buena sentadilla"; colorFeedback = new Color(0.5f, 1f, 0.5f); }
+            else { feedback = "Baja más la cadera"; colorFeedback = Color.cyan; }
+        }
+        else // FaseRep.Bajando (subiendo)
+        {
+            if (anguloSuavizado < 90f) { feedback = "¡Excelente profundidad!"; colorFeedback = Color.green; }
+            else { feedback = "Empuja con las piernas arriba"; colorFeedback = Color.cyan; }
+        }
     }
 
     private void EvaluarPushUp(IList<NormalizedLandmark> cuerpo)
@@ -280,43 +313,172 @@ public class AnalisisPostura : MonoBehaviour
         ProcesarRepConAngulo(angulo);
         float anguloEspalda = CalcularAngulo(LM(cuerpo, 12), LM(cuerpo, 24), LM(cuerpo, 28));
 
-        if (anguloSuavizado > 150f) { feedback = "Arriba — ¡Baja!"; colorFeedback = Color.white; }
-        else if (anguloSuavizado < 100f) {
-            if (anguloEspalda < 150f) { feedback = "Mantén la espalda recta"; colorFeedback = Color.red; }
-            else { feedback = "¡Buena flexión!"; colorFeedback = Color.green; }
-        } else { feedback = "Baja más el pecho"; colorFeedback = Color.yellow; }
+        if (anguloEspalda < 145f)
+        {
+            feedback = "Mantén la espalda recta";
+            colorFeedback = Color.red;
+            return;
+        }
+
+        if (faseActual == FaseRep.Inicio)
+        {
+            if (anguloSuavizado > 145f) { feedback = "Arriba — ¡Baja!"; colorFeedback = Color.white; }
+            else { feedback = "Baja más el pecho"; colorFeedback = Color.cyan; }
+        }
+        else // FaseRep.Bajando (subiendo)
+        {
+            if (anguloSuavizado < 100f) { feedback = "¡Buena flexión!"; colorFeedback = Color.green; }
+            else { feedback = "Empuja con fuerza arriba"; colorFeedback = Color.cyan; }
+        }
     }
 
     private void EvaluarJumpingJack(IList<NormalizedLandmark> cuerpo)
     {
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
-        float distManos = Vector2.Distance(LM(cuerpo, 16), LM(cuerpo, 15));
+        
+        // Determinar si las manos están arriba (por encima de los hombros con un margen cómodo de 0.08)
+        bool manosArriba = cuerpo[15].y < (cuerpo[11].y + 0.08f) && cuerpo[16].y < (cuerpo[12].y + 0.08f);
+        
+        // Determinar si los pies están abiertos
         float distPies = Vector2.Distance(LM(cuerpo, 28), LM(cuerpo, 27));
-
-        anguloSuavizado = Mathf.Lerp(anguloSuavizado, distManos, SUAVIZADO);
-        anguloActual = distManos * 100f; 
-        progreso = Mathf.Clamp01(Mathf.InverseLerp(umbralInferior, umbralSuperior, anguloSuavizado));
+        bool piesAbiertos = distPies > 0.22f; // Umbral de pies separados
+        bool piesCerrados = distPies < 0.14f; // Umbral de pies juntos
+        
+        // Usamos distPies como el ánguloActual/progreso para mostrar en la barra del HUD
+        anguloSuavizado = Mathf.Lerp(anguloSuavizado, distPies, SUAVIZADO);
+        anguloActual = anguloSuavizado * 100f; // Escala para mostrar en UI
+        progreso = Mathf.Clamp01(Mathf.InverseLerp(0.12f, 0.26f, anguloSuavizado));
 
         switch (faseActual)
         {
             case FaseRep.Inicio:
-                if (anguloSuavizado > umbralSuperior && distPies > 0.15f) { faseActual = FaseRep.Bajando; _tiempoInicioRep = Time.time; }
+                // Fase de apertura: Manos arriba y pies abiertos
+                if (manosArriba && piesAbiertos)
+                {
+                    faseActual = FaseRep.Bajando;
+                    _tiempoInicioRep = Time.time;
+                }
                 break;
+                
             case FaseRep.Bajando:
-                if (anguloSuavizado < umbralInferior && distPies < 0.1f)
+                // Fase de cierre: Manos abajo y pies cerrados
+                if (!manosArriba && piesCerrados)
                 {
                     faseActual = FaseRep.Completado;
                     repeticiones++;
-                    if (Time.time - _tiempoInicioRep < 0.5f) { repeticionesRapidas++; erroresCometidos.Add("Ritmo de salto muy acelerado"); }
+                    
+                    float duracionRep = Time.time - _tiempoInicioRep;
+                    if (duracionRep < 0.6f)
+                    {
+                        repeticionesRapidas++;
+                        erroresCometidos.Add("Ritmo de salto muy rápido");
+                    }
+                    
                     OnRepCompletada?.Invoke();
                     faseActual = FaseRep.Inicio;
                 }
                 break;
         }
 
-        if (anguloSuavizado > umbralSuperior) { feedback = "¡Brazos arriba!"; colorFeedback = Color.green; }
-        else if (anguloSuavizado < umbralInferior) { feedback = "Brazos abajo — ¡Salta!"; colorFeedback = Color.white; }
-        else { feedback = "Saltando..."; colorFeedback = Color.cyan; }
+        if (manosArriba && piesAbiertos)
+        {
+            feedback = "¡Excelente salto!"; colorFeedback = Color.green;
+        }
+        else if (!manosArriba && piesCerrados)
+        {
+            feedback = "Posición inicial — ¡Salta!"; colorFeedback = Color.white;
+        }
+        else if (manosArriba && !piesAbiertos)
+        {
+            feedback = "Abre más las piernas al saltar"; colorFeedback = Color.yellow;
+        }
+        else if (!manosArriba && piesAbiertos)
+        {
+            feedback = "Sube los brazos sobre la cabeza"; colorFeedback = Color.yellow;
+        }
+        else
+        {
+            feedback = "Saltando..."; colorFeedback = Color.cyan;
+        }
+    }
+
+    private void EvaluarSaltosCruzados(IList<NormalizedLandmark> cuerpo)
+    {
+        landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
+        
+        float distManos = Vector2.Distance(LM(cuerpo, 15), LM(cuerpo, 16));
+        float distPies = Vector2.Distance(LM(cuerpo, 27), LM(cuerpo, 28));
+
+        bool manosAbiertas = distManos > 0.38f;
+        bool manosCruzadas = distManos < 0.16f;
+
+        bool piesAbiertos = distPies > 0.20f;
+        bool piesCruzados = distPies < 0.14f;
+
+        // Para la barra de progreso
+        anguloSuavizado = Mathf.Lerp(anguloSuavizado, distPies, SUAVIZADO);
+        anguloActual = anguloSuavizado * 100f;
+        progreso = Mathf.Clamp01(Mathf.InverseLerp(0.12f, 0.24f, anguloSuavizado));
+
+        // Validación extra: avisar si levanta demasiado los brazos por encima de los hombros
+        bool manosMuyAltas = cuerpo[15].y < cuerpo[11].y - 0.05f && cuerpo[16].y < cuerpo[12].y - 0.05f;
+
+        switch (faseActual)
+        {
+            case FaseRep.Inicio:
+                // Fase de apertura: Manos abiertas y pies abiertos
+                if (manosAbiertas && piesAbiertos)
+                {
+                    faseActual = FaseRep.Bajando;
+                    _tiempoInicioRep = Time.time;
+                }
+                break;
+
+            case FaseRep.Bajando:
+                // Fase de cruce: Manos cruzadas y pies cruzados
+                if (manosCruzadas && piesCruzados)
+                {
+                    faseActual = FaseRep.Completado;
+                    repeticiones++;
+
+                    float duracionRep = Time.time - _tiempoInicioRep;
+                    if (duracionRep < 0.6f)
+                    {
+                        repeticionesRapidas++;
+                        erroresCometidos.Add("Ritmo de salto cruzado muy rápido");
+                    }
+
+                    OnRepCompletada?.Invoke();
+                    faseActual = FaseRep.Inicio;
+                }
+                break;
+        }
+
+        if (manosMuyAltas)
+        {
+            feedback = "Mantén los brazos a la altura de los hombros";
+            colorFeedback = Color.yellow;
+        }
+        else if (manosAbiertas && piesAbiertos)
+        {
+            feedback = "¡Buen salto abierto!"; colorFeedback = Color.green;
+        }
+        else if (manosCruzadas && piesCruzados)
+        {
+            feedback = "¡Buen cruce!"; colorFeedback = Color.green;
+        }
+        else if (manosAbiertas && !piesAbiertos)
+        {
+            feedback = "Abre más las piernas"; colorFeedback = Color.yellow;
+        }
+        else if (!manosAbiertas && piesAbiertos)
+        {
+            feedback = "Abre bien los brazos a los lados"; colorFeedback = Color.yellow;
+        }
+        else
+        {
+            feedback = "Cruzando..."; colorFeedback = Color.cyan;
+        }
     }
 
     private void EvaluarSitup(IList<NormalizedLandmark> cuerpo)
@@ -325,9 +487,16 @@ public class AnalisisPostura : MonoBehaviour
         float angulo = (CalcularAngulo(LM(cuerpo, 12), LM(cuerpo, 24), LM(cuerpo, 26)) + CalcularAngulo(LM(cuerpo, 11), LM(cuerpo, 23), LM(cuerpo, 25))) / 2f;
         ProcesarRepConAngulo(angulo);
 
-        if (anguloSuavizado > 140f) { feedback = "Acostado — ¡Sube!"; colorFeedback = Color.white; }
-        else if (anguloSuavizado < 80f) { feedback = "¡Arriba! Buen crunch"; colorFeedback = Color.green; }
-        else { feedback = "Sigue subiendo el torso"; colorFeedback = Color.yellow; }
+        if (faseActual == FaseRep.Inicio)
+        {
+            if (anguloSuavizado > 130f) { feedback = "Acostado — ¡Sube el torso!"; colorFeedback = Color.white; }
+            else { feedback = "Sigue subiendo el torso"; colorFeedback = Color.cyan; }
+        }
+        else // FaseRep.Bajando (bajando)
+        {
+            if (anguloSuavizado < 80f) { feedback = "¡Arriba! Buen crunch"; colorFeedback = Color.green; }
+            else { feedback = "Baja controlado"; colorFeedback = Color.cyan; }
+        }
     }
 
     private void EvaluarBurpee(IList<NormalizedLandmark> cuerpo)
@@ -338,7 +507,7 @@ public class AnalisisPostura : MonoBehaviour
 
         if (anguloSuavizado > 150f && alturaRelativa > 0.3f) { feedback = "¡De pie! — Baja al suelo"; colorFeedback = Color.white; }
         else if (anguloSuavizado < 100f) { feedback = "¡En el suelo! — Empuja arriba"; colorFeedback = Color.green; }
-        else { feedback = "Transición..."; colorFeedback = Color.yellow; }
+        else { feedback = "Transición..."; colorFeedback = Color.cyan; }
     }
 
     private void EvaluarPlank(IList<NormalizedLandmark> cuerpo)
@@ -347,7 +516,13 @@ public class AnalisisPostura : MonoBehaviour
         anguloSuavizado = Mathf.Lerp(anguloSuavizado, CalcularAngulo(LM(cuerpo, 12), LM(cuerpo, 24), LM(cuerpo, 28)), SUAVIZADO);
         anguloActual = anguloSuavizado;
 
-        if (anguloSuavizado > 150f)
+        float yShoulder = cuerpo[12].y;
+        float yHip = cuerpo[24].y;
+        float yAnkle = cuerpo[28].y;
+        float yEsperado = (yShoulder + yAnkle) / 2f;
+        float difY = yHip - yEsperado; // difY > 0 es cadera caída, difY < 0 es cadera levantada
+
+        if (anguloSuavizado > 155f && Mathf.Abs(difY) < 0.08f)
         {
             tiempoEnPlank += Time.deltaTime;
             progreso = (tiempoEnPlank % TIEMPO_REP_PLANK) / TIEMPO_REP_PLANK;
@@ -357,8 +532,9 @@ public class AnalisisPostura : MonoBehaviour
         }
         else
         {
-            if (anguloSuavizado < 140f) { feedback = "Cadera muy baja — ¡Sube!"; colorFeedback = Color.red; }
-            else { feedback = "Alinea el cuerpo"; colorFeedback = Color.yellow; }
+            if (difY > 0.05f) { feedback = "Cadera muy baja — ¡Sube la pelvis!"; colorFeedback = Color.red; }
+            else if (difY < -0.05f) { feedback = "Cadera muy alta — ¡Baja la cadera!"; colorFeedback = Color.red; }
+            else { feedback = "Alinea tu cuerpo en línea recta"; colorFeedback = Color.yellow; }
         }
     }
 
