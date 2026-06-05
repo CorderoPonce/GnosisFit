@@ -9,6 +9,7 @@ public enum TipoSupervision
     Situp,
     Burpee,
     Plank,
+    SaltosCruzados,
     Generic // Sin análisis específico
 }
 
@@ -58,7 +59,7 @@ public class ExerciseData
             new ExerciseData("Burpee",              "Todos",   "Alta",  4,  TipoSupervision.Burpee, new Vector3(0f, 0.5f, 1.8f), new Vector3(0f, 0.3f, 0f), 45f),
 
             // Saltos Cruzados / Jumping Jacks (Standing jumping motion)
-            new ExerciseData("Saltos Cruzados",     "Piernas", "Alta",  6,  TipoSupervision.JumpingJack, new Vector3(0f, 0.9f, 1.8f), new Vector3(0f, 0.75f, 0f), 45f),
+            new ExerciseData("Saltos Cruzados",     "Piernas", "Alta",  6,  TipoSupervision.SaltosCruzados, new Vector3(0f, 0.9f, 1.8f), new Vector3(0f, 0.75f, 0f), 45f),
             new ExerciseData("Jumping Jacks",       "Todos",   "Baja",  9,  TipoSupervision.JumpingJack, new Vector3(0f, 0.9f, 1.8f), new Vector3(0f, 0.75f, 0f), 45f),
 
             // Flexiones / Pecho en el suelo (PushUps)

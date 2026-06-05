@@ -187,7 +187,7 @@ public class SupervisionHUD : MonoBehaviour
 
             if (analisis.ejercicioActual == TipoSupervision.Plank)
                 textoAngulo.text = $"Tiempo: {(Time.time - analisis.tiempoInicio):F0}s";
-            else if (analisis.ejercicioActual == TipoSupervision.JumpingJack)
+            else if (analisis.ejercicioActual == TipoSupervision.JumpingJack || analisis.ejercicioActual == TipoSupervision.SaltosCruzados)
                 textoAngulo.text = $"Apertura: {analisis.anguloActual:F0}%";
             else
                 textoAngulo.text = $"Ángulo: {analisis.anguloActual:F0}°";

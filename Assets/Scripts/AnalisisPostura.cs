@@ -91,6 +91,10 @@ public class AnalisisPostura : MonoBehaviour
                 umbralInferior = 0.15f; umbralSuperior = 0.4f;
                 vistaRequerida = VistaRequerida.Frente;
                 break;
+            case TipoSupervision.SaltosCruzados:
+                umbralInferior = 0.15f; umbralSuperior = 0.4f;
+                vistaRequerida = VistaRequerida.Frente;
+                break;
             case TipoSupervision.Burpee:
                 umbralInferior = 90f; umbralSuperior = 150f;
                 vistaRequerida = VistaRequerida.Perfil;
@@ -152,7 +156,8 @@ public class AnalisisPostura : MonoBehaviour
         // NUEVO: 1. Validación de Ángulo de Cámara
         if (vistaRequerida != VistaRequerida.Cualquiera)
         {
-            float distHombros = Mathf.Abs(cuerpo[11].x - cuerpo[12].x);
+            float distHombros = Vector2.Distance(LM(cuerpo, 11), LM(cuerpo, 12));
+            float distCaderas = Vector2.Distance(LM(cuerpo, 23), LM(cuerpo, 24));
             
             // Calculamos el largo del torso en pantalla para normalizar por la distancia del usuario
             Vector2 hombroMedio = (LM(cuerpo, 11) + LM(cuerpo, 12)) / 2f;
@@ -160,21 +165,26 @@ public class AnalisisPostura : MonoBehaviour
             float largoTorso = Vector2.Distance(hombroMedio, caderaMedia);
             if (largoTorso < 0.05f) largoTorso = 0.1f; // Evitar división por cero o ruido extremo
 
-            float relacionAspecto = distHombros / largoTorso;
-            bool esPerfil = relacionAspecto < 0.35f; // Hombros superpuestos/alineados verticalmente
-            bool esFrente = relacionAspecto > 0.6f;  // Hombros separados horizontalmente
+            float relacionHombros = distHombros / largoTorso;
+            float relacionCaderas = distCaderas / largoTorso;
 
-            if (vistaRequerida == VistaRequerida.Perfil && !esPerfil)
+            // Detección altamente tolerante para evitar bloqueos por distancia o relación de aspecto:
+            // Frente: los hombros o las caderas están ensanchados horizontalmente o la distancia absoluta es suficiente
+            bool esFrente = relacionHombros > 0.38f || relacionCaderas > 0.28f || distHombros > 0.08f || distCaderas > 0.06f;
+            // Perfil: tanto hombros como caderas están extremadamente comprimidos en el eje X (escala independiente)
+            bool esPerfil = relacionHombros < 0.24f && relacionCaderas < 0.18f;
+
+            if (vistaRequerida == VistaRequerida.Perfil && esFrente)
             {
                 feedback = "Gírate y colócate de PERFIL a la cámara";
                 colorFeedback = Color.red;
-                return; // Bloquea el análisis hasta que se voltee
+                return; // Bloquea el análisis si está claramente de frente
             }
-            else if (vistaRequerida == VistaRequerida.Frente && !esFrente)
+            else if (vistaRequerida == VistaRequerida.Frente && esPerfil)
             {
                 feedback = "Gírate y colócate de FRENTE a la cámara";
                 colorFeedback = Color.red;
-                return;
+                return; // Bloquea el análisis si está claramente de perfil
             }
         }
 
@@ -187,6 +197,7 @@ public class AnalisisPostura : MonoBehaviour
             case TipoSupervision.Situp:        EvaluarSitup(cuerpo);        break;
             case TipoSupervision.Burpee:       EvaluarBurpee(cuerpo);       break;
             case TipoSupervision.Plank:        EvaluarPlank(cuerpo);        break;
+            case TipoSupervision.SaltosCruzados: EvaluarSaltosCruzados(cuerpo); break;
             default:                           EvaluarGeneric();            break;
         }
 
@@ -325,8 +336,8 @@ public class AnalisisPostura : MonoBehaviour
     {
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
         
-        // Determinar si las manos están arriba (por encima de los hombros)
-        bool manosArriba = cuerpo[15].y < cuerpo[11].y && cuerpo[16].y < cuerpo[12].y;
+        // Determinar si las manos están arriba (por encima de los hombros con un margen cómodo de 0.08)
+        bool manosArriba = cuerpo[15].y < (cuerpo[11].y + 0.08f) && cuerpo[16].y < (cuerpo[12].y + 0.08f);
         
         // Determinar si los pies están abiertos
         float distPies = Vector2.Distance(LM(cuerpo, 28), LM(cuerpo, 27));
@@ -388,6 +399,85 @@ public class AnalisisPostura : MonoBehaviour
         else
         {
             feedback = "Saltando..."; colorFeedback = Color.cyan;
+        }
+    }
+
+    private void EvaluarSaltosCruzados(IList<NormalizedLandmark> cuerpo)
+    {
+        landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
+        
+        float distManos = Vector2.Distance(LM(cuerpo, 15), LM(cuerpo, 16));
+        float distPies = Vector2.Distance(LM(cuerpo, 27), LM(cuerpo, 28));
+
+        bool manosAbiertas = distManos > 0.38f;
+        bool manosCruzadas = distManos < 0.16f;
+
+        bool piesAbiertos = distPies > 0.20f;
+        bool piesCruzados = distPies < 0.14f;
+
+        // Para la barra de progreso
+        anguloSuavizado = Mathf.Lerp(anguloSuavizado, distPies, SUAVIZADO);
+        anguloActual = anguloSuavizado * 100f;
+        progreso = Mathf.Clamp01(Mathf.InverseLerp(0.12f, 0.24f, anguloSuavizado));
+
+        // Validación extra: avisar si levanta demasiado los brazos por encima de los hombros
+        bool manosMuyAltas = cuerpo[15].y < cuerpo[11].y - 0.05f && cuerpo[16].y < cuerpo[12].y - 0.05f;
+
+        switch (faseActual)
+        {
+            case FaseRep.Inicio:
+                // Fase de apertura: Manos abiertas y pies abiertos
+                if (manosAbiertas && piesAbiertos)
+                {
+                    faseActual = FaseRep.Bajando;
+                    _tiempoInicioRep = Time.time;
+                }
+                break;
+
+            case FaseRep.Bajando:
+                // Fase de cruce: Manos cruzadas y pies cruzados
+                if (manosCruzadas && piesCruzados)
+                {
+                    faseActual = FaseRep.Completado;
+                    repeticiones++;
+
+                    float duracionRep = Time.time - _tiempoInicioRep;
+                    if (duracionRep < 0.6f)
+                    {
+                        repeticionesRapidas++;
+                        erroresCometidos.Add("Ritmo de salto cruzado muy rápido");
+                    }
+
+                    OnRepCompletada?.Invoke();
+                    faseActual = FaseRep.Inicio;
+                }
+                break;
+        }
+
+        if (manosMuyAltas)
+        {
+            feedback = "Mantén los brazos a la altura de los hombros";
+            colorFeedback = Color.yellow;
+        }
+        else if (manosAbiertas && piesAbiertos)
+        {
+            feedback = "¡Buen salto abierto!"; colorFeedback = Color.green;
+        }
+        else if (manosCruzadas && piesCruzados)
+        {
+            feedback = "¡Buen cruce!"; colorFeedback = Color.green;
+        }
+        else if (manosAbiertas && !piesAbiertos)
+        {
+            feedback = "Abre más las piernas"; colorFeedback = Color.yellow;
+        }
+        else if (!manosAbiertas && piesAbiertos)
+        {
+            feedback = "Abre bien los brazos a los lados"; colorFeedback = Color.yellow;
+        }
+        else
+        {
+            feedback = "Cruzando..."; colorFeedback = Color.cyan;
         }
     }
 
