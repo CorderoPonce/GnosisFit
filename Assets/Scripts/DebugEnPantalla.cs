@@ -16,7 +16,7 @@ public class DebugEnPantalla : MonoBehaviour
 
     private GameObject panelDebug;
     private TextMeshProUGUI textoLog;
-    private bool visible = true;
+    private bool visible = false;
 
     void Awake()
     {
@@ -96,6 +96,7 @@ public class DebugEnPantalla : MonoBehaviour
         trt.offsetMax = new Vector2(-20, -10);
 
         textoLog.text = "[Debug activo — toca con 3 dedos para ocultar]";
+        panelDebug.SetActive(visible);
     }
 
     void Update()

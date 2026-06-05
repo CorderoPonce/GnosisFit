@@ -123,16 +123,29 @@ namespace Mediapipe.Unity
         yield break;
       }
 
-      if (webCamDevice != null)
+      availableSources = WebCamTexture.devices;
+
+      if (webCamDevice is WebCamDevice device && device.isFrontFacing)
       {
         yield break;
       }
 
-      availableSources = WebCamTexture.devices;
-
       if (availableSources != null && availableSources.Length > 0)
       {
-        webCamDevice = availableSources[0];
+        bool foundFront = false;
+        for (int i = 0; i < availableSources.Length; i++)
+        {
+          if (availableSources[i].isFrontFacing)
+          {
+            webCamDevice = availableSources[i];
+            foundFront = true;
+            break;
+          }
+        }
+        if (!foundFront)
+        {
+          webCamDevice = availableSources[0];
+        }
       }
     }
 
@@ -149,7 +162,13 @@ namespace Mediapipe.Unity
         if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
         {
           Permission.RequestUserPermission(Permission.Camera);
-          yield return new WaitForSeconds(0.1f);
+          float timeout = 10f;
+          float elapsed = 0f;
+          while (!Permission.HasUserAuthorizedPermission(Permission.Camera) && elapsed < timeout)
+          {
+            yield return new WaitForSeconds(0.2f);
+            elapsed += 0.2f;
+          }
         }
 #elif UNITY_IOS
         if (!Application.HasUserAuthorization(UserAuthorization.WebCam)) {

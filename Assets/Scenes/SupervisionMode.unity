@@ -280,6 +280,7 @@ GameObject:
   - component: {fileID: 428261353}
   - component: {fileID: 428261352}
   - component: {fileID: 428261355}
+  - component: {fileID: 428261356}
   m_Layer: 0
   m_Name: SceneOrchestrator_Supervision
   m_TagString: Untagged
@@ -1073,3 +1074,41 @@ SceneRoots:
   - {fileID: 420786856}
   - {fileID: 682992020}
   - {fileID: 428261354}
+--- !u!114 &428261356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428261351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6740834bb9b9ca74aa6e948cf81d2785, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GestorModoSupervision
+  cameraManager: {fileID: 0}
+  scriptPlaceExample: {fileID: 0}
+  panelSupervisionUI: {fileID: 0}
+  contenedorPIP: {fileID: 0}
+  motorMediaPipe: {fileID: 0}
+  analisisPostura: {fileID: 428261352}
+  avataresPrefabs:
+  - {fileID: 4432598991548584514, guid: 29877ac7f1ec5544aba252e1231631b8, type: 3}
+  - {fileID: 1450580154853244378, guid: 087288bc10392ba499eb4ddd41e691c7, type: 3}
+  - {fileID: 7908224631864341746, guid: d1fede77aa9de554f8043445f31778d4, type: 3}
+  - {fileID: 5255445102396555187, guid: 3b26d0e590c63b2468834f367e59569f, type: 3}
+  ejerciciosControllers:
+  - {fileID: 9100000, guid: a09a8f6b162ec854dab8715fe8c91802, type: 2}
+  - {fileID: 9100000, guid: 31dea0cfdd2e3554886596f0afbf0c7b, type: 2}
+  - {fileID: 9100000, guid: e3d77f70513fe3447a8612d35087b5fe, type: 2}
+  - {fileID: 9100000, guid: 2a5d87317d6a08347b0e7efc922e5bbb, type: 2}
+  - {fileID: 9100000, guid: 414e95699fe66504e8b1659450ccbcea, type: 2}
+  - {fileID: 9100000, guid: d5ca80955b9f8cf44b0bf4d15061a8a2, type: 2}
+  - {fileID: 9100000, guid: 80e33ac0c90c1f343a22b01eb9910a21, type: 2}
+  - {fileID: 9100000, guid: 7ff6a681c834b05408d8bb910698d79d, type: 2}
+  - {fileID: 9100000, guid: 3d9b695f00c91424ea087304bc2ce837, type: 2}
+  - {fileID: 9100000, guid: 438b667c4d37d7945b79a1f02497e1e0, type: 2}
+  - {fileID: 9100000, guid: 37d1b5ec1d29bfd45946f737981f8990, type: 2}
+  - {fileID: 9100000, guid: ae557afc25c8fb0419dbe4172bed6558, type: 2}
+  - {fileID: 9100000, guid: 2942460d5751ef340a59e5e5a87f8eba, type: 2}
+  - {fileID: 9100000, guid: 2f29ae32d1640d242af675fc17383ae7, type: 2}

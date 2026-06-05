@@ -8,6 +8,13 @@ public class GestorModoSupervision : MonoBehaviour
     public ARCameraManager cameraManager;
     public PlaceExample scriptPlaceExample;
 
+    [Header("Base de Datos Centralizada")]
+    public CharacterDatabase database;
+
+    [Header("Compatibilidad Local (Será sobrescrita por Base de Datos si está disponible)")]
+    public GameObject[] avataresPrefabs; 
+    public RuntimeAnimatorController[] ejerciciosControllers;
+
     [Header("UI y PIP")]
     public GameObject panelSupervisionUI;
     public Transform contenedorPIP;
@@ -28,7 +35,25 @@ public class GestorModoSupervision : MonoBehaviour
     private void Awake()
     {
         _layerManager = GetComponent<SupervisionLayerManager>() ?? gameObject.AddComponent<SupervisionLayerManager>();
-        _layerManager.motorMediaPipe = motorMediaPipe;
+        if (motorMediaPipe != null)
+        {
+            _layerManager.motorMediaPipe = motorMediaPipe;
+        }
+
+        // Cargar base de datos centralizada de forma segura
+        if (database == null)
+        {
+            database = Resources.Load<CharacterDatabase>("CharacterDatabase");
+        }
+
+        // Sincronizar arrays locales con la base de datos central para mantener compatibilidad total
+        if (database != null)
+        {
+            if (database.avataresPrefabs != null && database.avataresPrefabs.Length > 0)
+                avataresPrefabs = database.avataresPrefabs;
+            if (database.ejerciciosControllers != null && database.ejerciciosControllers.Length > 0)
+                ejerciciosControllers = database.ejerciciosControllers;
+        }
 
         var btn = GameObject.Find("BotonCamara")?.GetComponent<UnityEngine.UI.Button>();
         if (btn != null) { btn.onClick.RemoveAllListeners(); btn.onClick.AddListener(AlternarModoSupervision); }
@@ -77,11 +102,30 @@ public class GestorModoSupervision : MonoBehaviour
         }
 
         if (camaraPIP == null) {
+            // Buscar los parámetros de cámara específicos para el ejercicio seleccionado
+            ExerciseData datosEj = null;
+            if (GenosisFitDataManager.Instance != null && !string.IsNullOrEmpty(GenosisFitDataManager.Instance.EjercicioSeleccionado))
+            {
+                foreach (var ej in ExerciseData.ObtenerCatalogo())
+                {
+                    if (ej.nombre == GenosisFitDataManager.Instance.EjercicioSeleccionado)
+                    {
+                        datosEj = ej;
+                        break;
+                    }
+                }
+            }
+
+            Vector3 offset = (datosEj != null) ? datosEj.offsetCamara : new Vector3(0f, 0.75f, 1.8f);
+            Vector3 target = (datosEj != null) ? datosEj.targetCamara : new Vector3(0f, 0.45f, 0f);
+            float fov = (datosEj != null) ? datosEj.fovCamara : 45f;
+
             GameObject camObj = new GameObject("CamaraPIP");
-            camObj.transform.position = contenedorPIP.position + new Vector3(0, 1.2f, 2.8f);
-            camObj.transform.LookAt(contenedorPIP.position + new Vector3(0, 1f, 0));
+            camObj.transform.position = contenedorPIP.position + offset;
+            camObj.transform.LookAt(contenedorPIP.position + target);
             
             camaraPIP = camObj.AddComponent<Camera>();
+            camaraPIP.fieldOfView = fov;
             camaraPIP.targetTexture = renderTexturePIP;
             camaraPIP.clearFlags = CameraClearFlags.SolidColor;
             camaraPIP.backgroundColor = new Color(0, 0, 0, 0); 
@@ -104,15 +148,18 @@ public class GestorModoSupervision : MonoBehaviour
             idEjercicio = GenosisFitDataManager.Instance.IndiceEjercicio;
         }
 
-        if (scriptPlaceExample == null || scriptPlaceExample.avataresPrefabs == null || scriptPlaceExample.avataresPrefabs.Length == 0) return;
-        if (_clonPIPActual != null) Destroy(_clonPIPActual);
-        if (idPersonaje >= scriptPlaceExample.avataresPrefabs.Length) idPersonaje = 0;
+        GameObject[] prefabsToUse = (scriptPlaceExample != null) ? scriptPlaceExample.avataresPrefabs : avataresPrefabs;
+        RuntimeAnimatorController[] controllersToUse = (scriptPlaceExample != null) ? scriptPlaceExample.ejerciciosControllers : ejerciciosControllers;
 
-        _clonPIPActual = Instantiate(scriptPlaceExample.avataresPrefabs[idPersonaje], contenedorPIP.position, contenedorPIP.rotation);
+        if (prefabsToUse == null || prefabsToUse.Length == 0) return;
+        if (_clonPIPActual != null) Destroy(_clonPIPActual);
+        if (idPersonaje >= prefabsToUse.Length) idPersonaje = 0;
+
+        _clonPIPActual = Instantiate(prefabsToUse[idPersonaje], contenedorPIP.position, contenedorPIP.rotation);
 
         var animator = _clonPIPActual.GetComponent<Animator>();
-        if (animator != null && scriptPlaceExample.ejerciciosControllers != null && idEjercicio < scriptPlaceExample.ejerciciosControllers.Length) {
-            animator.runtimeAnimatorController = scriptPlaceExample.ejerciciosControllers[idEjercicio];
+        if (animator != null && controllersToUse != null && idEjercicio < controllersToUse.Length) {
+            animator.runtimeAnimatorController = controllersToUse[idEjercicio];
         }
 
         CambiarCapaRecursivo(_clonPIPActual.transform, 4);

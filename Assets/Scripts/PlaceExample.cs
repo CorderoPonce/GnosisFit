@@ -7,10 +7,11 @@ using UnityEngine.EventSystems;
 [RequireComponent(typeof(ARRaycastManager))]
 public class PlaceExample : MonoBehaviour
 {
-    [Header("1. Lista de Personajes (Ej: Mark, X-Bot)")]
-    public GameObject[] avataresPrefabs; 
+    [Header("Base de Datos Centralizada")]
+    public CharacterDatabase database;
 
-    [Header("2. Lista de Ejercicios (Archivos .controller)")]
+    [Header("Compatibilidad Local (Será sobrescrita por Base de Datos si está disponible)")]
+    public GameObject[] avataresPrefabs; 
     public RuntimeAnimatorController[] ejerciciosControllers;
 
     public GameObject modeloInstanciado;
@@ -18,7 +19,6 @@ public class PlaceExample : MonoBehaviour
     private static List<ARRaycastHit> impactos = new List<ARRaycastHit>();
     
     // Rastrean el estado actual elegido por el usuario en ambos menús
-    // Cambia esto:
     public int indicePersonajeActual = 0; 
     public int indiceEjercicioActual = 0;
     
@@ -28,6 +28,21 @@ public class PlaceExample : MonoBehaviour
     void Awake()
     {
         raycastManager = GetComponent<ARRaycastManager>();
+
+        // Cargar base de datos centralizada de forma segura
+        if (database == null)
+        {
+            database = Resources.Load<CharacterDatabase>("CharacterDatabase");
+        }
+
+        // Sincronizar arrays locales con la base de datos central para mantener compatibilidad total
+        if (database != null)
+        {
+            if (database.avataresPrefabs != null && database.avataresPrefabs.Length > 0)
+                avataresPrefabs = database.avataresPrefabs;
+            if (database.ejerciciosControllers != null && database.ejerciciosControllers.Length > 0)
+                ejerciciosControllers = database.ejerciciosControllers;
+        }
     }
 
     void Start()

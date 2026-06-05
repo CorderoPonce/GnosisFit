@@ -166,7 +166,7 @@ MonoBehaviour:
   textoChat: {fileID: 0}
   botonEnviar: {fileID: 0}
   scrollChat: {fileID: 0}
-  urlOllama: http://192.168.1.10:11434/api/generate
+  urlOllama: https://gloomily-disparity-evoke.ngrok-free.dev/api/generate
   nombreModelo: llama3
 --- !u!4 &966888760
 Transform:

@@ -29,7 +29,7 @@ public class SupervisionHUD : MonoBehaviour
     private static readonly Color BARRA_BG = new Color(0.2f, 0.2f, 0.3f, 0.8f);
     private static readonly Color BARRA_FILL = new Color(0.2f, 0.8f, 1f);
 
-    private string urlOllama = "https://imply-perjury-yahoo.ngrok-free.dev/api/generate";
+    private string urlOllama = "https://gloomily-disparity-evoke.ngrok-free.dev/api/generate";
     private string nombreModelo = "llama3";
 
     public void Inicializar(Canvas canvas, AnalisisPostura analisisRef, GestorModoSupervision gestorRef, string nombreEjercicio)
@@ -176,10 +176,11 @@ public class SupervisionHUD : MonoBehaviour
     private void ActualizarVista(){
             if (analisis == null || panelPrincipal == null || !panelPrincipal.activeSelf) return;
 
-            // SOLUCIÓN RÁPIDA: Apagamos el panel padre de la imagen para ocultar la caja blanca
+            // Activamos el panel Picture-in-Picture solo si hay una textura 3D PIP asignada
             if (rawImgPIP != null) 
             {
-                rawImgPIP.transform.parent.gameObject.SetActive(false);
+                bool tieneTextura = rawImgPIP.texture != null;
+                rawImgPIP.transform.parent.gameObject.SetActive(tieneTextura);
             }
 
             textoReps.text = analisis.repeticiones.ToString();

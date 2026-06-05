@@ -71,6 +71,11 @@ namespace Mediapipe.Unity.Sample
       _stopwatch.Stop();
     }
 
+    protected virtual void OnDestroy()
+    {
+      Stop();
+    }
+
     protected long GetCurrentTimestampMillisec() => _stopwatch.IsRunning ? _stopwatch.ElapsedTicks / TimeSpan.TicksPerMillisecond : -1;
 
     protected Bootstrap FindBootstrap()

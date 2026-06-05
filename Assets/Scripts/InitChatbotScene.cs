@@ -22,9 +22,6 @@ public class InitChatbotScene : MonoBehaviour
     static readonly Color TEXT_GRAY      = new Color(0.55f, 0.55f, 0.60f, 1f);
     static readonly Color TEXT_PURPLE    = new Color(0.53f, 0.18f, 0.58f, 1f);
 
-    // Referencias internas
-    private RectTransform barraEntrada;
-    private Vector2 posicionOriginalBarra;
 
     void Start()
     {
@@ -148,6 +145,7 @@ public class InitChatbotScene : MonoBehaviour
         // Texto del chat
         var chatTextGO = new GameObject("ChatText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         chatTextGO.transform.SetParent(content.transform, false);
+        chatTextGO.AddComponent<EnlacesChat>();
         var chatText = chatTextGO.GetComponent<TextMeshProUGUI>();
         chatText.fontSize = 30;
         chatText.color = TEXT_WHITE;
@@ -168,9 +166,10 @@ public class InitChatbotScene : MonoBehaviour
         inputBarRT.sizeDelta = new Vector2(0, 160);
         inputBarRT.anchoredPosition = Vector2.zero;
 
-        // Guardar referencia para EmpujarChat
-        barraEntrada = inputBarRT;
-        posicionOriginalBarra = inputBarRT.anchoredPosition;
+        // Centralizar el comportamiento del teclado móvil usando el script reutilizable EmpujarChat
+        var empujar = inputBar.AddComponent<EmpujarChat>();
+        empujar.barraEntrada = inputBarRT;
+        empujar.alturaSalto = 900f;
 
         // Input Field
         var inputFieldGO = CreatePanel(inputBar.transform, "ChatInputField", INPUT_BG);
@@ -263,20 +262,6 @@ public class InitChatbotScene : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        // Funcionalidad EmpujarChat: sube la barra cuando aparece el teclado móvil
-        if (barraEntrada == null) return;
-
-        if (TouchScreenKeyboard.visible)
-        {
-            barraEntrada.anchoredPosition = new Vector2(posicionOriginalBarra.x, posicionOriginalBarra.y + 900f);
-        }
-        else
-        {
-            barraEntrada.anchoredPosition = posicionOriginalBarra;
-        }
-    }
 
     // ═══════════════════════════════════════
     // UTILIDADES UI
