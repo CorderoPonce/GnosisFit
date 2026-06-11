@@ -28,16 +28,29 @@ public class UIMenuCatalog : MonoBehaviour
     private List<RenderTexture> spawnedRenderTextures = new List<RenderTexture>();
     private List<Transform> thumbnailClones = new List<Transform>();
 
-    // ── design tokens ──
-    static readonly Color BG        = new Color(0.96f, 0.96f, 0.96f);
-    static readonly Color CARD_BG   = Color.white;
-    static readonly Color IMG_PH    = new Color(0.85f, 0.85f, 0.85f);
-    static readonly Color BTN_AR    = new Color(0.15f, 0.75f, 0.65f);
-    static readonly Color BTN_POSTURE = new Color(0.85f, 0.45f, 0.15f);
-    static readonly Color ACTIVE_BG = new Color(0.15f, 0.15f, 0.15f);
-    static readonly Color INACTIVE_BG = new Color(0.91f, 0.91f, 0.91f);
-    static readonly Color TXT_DARK  = new Color(0.15f, 0.15f, 0.15f);
-    static readonly Color TXT_GRAY  = new Color(0.5f, 0.5f, 0.5f);
+    // ── procedurally generated sprites ──
+    private Sprite whiteRoundedSprite;
+    private Sprite cardRoundedSprite;
+
+    // ── design tokens (Propuesta 1: Tema Claro Refinado) ──
+    static readonly Color BG            = new Color(0.97f, 0.97f, 0.98f); // Fondo gris muy claro
+    static readonly Color CARD_BG       = Color.white;
+    static readonly Color IMG_PH        = new Color(0.92f, 0.93f, 0.95f, 1f); // Fondo azul metálico claro para la previsualización 3D
+    static readonly Color BTN_AR        = new Color(0.10f, 0.75f, 0.65f); // Verde azulado Teal para RA
+    static readonly Color BTN_POSTURE   = new Color(0.85f, 0.45f, 0.15f); // Naranja premium para Corrección de Postura
+    static readonly Color ACTIVE_BG     = new Color(0.10f, 0.75f, 0.65f); // Teal para chip activo
+    static readonly Color INACTIVE_BG   = new Color(0.93f, 0.93f, 0.94f); // Gris muy claro para chip inactivo
+    static readonly Color TXT_DARK      = new Color(0.15f, 0.15f, 0.15f); // Texto principal oscuro
+    static readonly Color TXT_GRAY      = new Color(0.55f, 0.55f, 0.55f); // Texto secundario gris
+
+    void Awake()
+    {
+        // Generar Sprites redondeados suavizados (anti-aliased) en tiempo de ejecución
+        // 1. Sprite redondeado blanco para botones, placeholders y chips
+        whiteRoundedSprite = CreateRoundedSprite(128, 128, 32, Color.white, Color.clear, 0f);
+        // 2. Sprite de tarjeta con fondo blanco y contorno gris suave de 2.5px
+        cardRoundedSprite = CreateRoundedSprite(128, 128, 32, Color.white, new Color(0.88f, 0.89f, 0.90f, 1f), 2.5f);
+    }
 
     void Start()
     {
@@ -60,10 +73,22 @@ public class UIMenuCatalog : MonoBehaviour
                 Destroy(rt);
             }
         }
+
+        // Liberar texturas procedimentales para evitar fugas de memoria
+        if (whiteRoundedSprite != null)
+        {
+            if (whiteRoundedSprite.texture != null) Destroy(whiteRoundedSprite.texture);
+            Destroy(whiteRoundedSprite);
+        }
+        if (cardRoundedSprite != null)
+        {
+            if (cardRoundedSprite.texture != null) Destroy(cardRoundedSprite.texture);
+            Destroy(cardRoundedSprite);
+        }
     }
 
     // ════════════════════════════════════════
-    //  BUILD THE ENTIRE UI
+    //  BUILD THE ENTIRE UI (Programmatic)
     // ════════════════════════════════════════
     void BuildUI()
     {
@@ -80,11 +105,10 @@ public class UIMenuCatalog : MonoBehaviour
 
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // ── Background panel ──
+        // ── Background Panel ──
         var bg = CreatePanel(canvasGO.transform, "Background", BG);
         Stretch(bg);
 
-        // ── Root vertical layout ──
         var rootVL = bg.AddComponent<VerticalLayoutGroup>();
         rootVL.childControlWidth = true;
         rootVL.childControlHeight = true;
@@ -93,34 +117,31 @@ public class UIMenuCatalog : MonoBehaviour
         rootVL.spacing = 0;
         rootVL.padding = new RectOffset(0, 0, 0, 0);
 
-        // ── Title ──
+        // ── Title Bar ──
         var titleBar = CreatePanel(bg.transform, "TitleBar", BG);
-        AddLE(titleBar, minH: 100);
-        
-        var titleTxt = CreateTMP(titleBar.transform,
-            "Gnosis Fit", 54, TXT_DARK, FontStyles.Bold,
-            TextAlignmentOptions.Center);
+        AddLE(titleBar, minH: 120);
+
+        var titleTxt = CreateTMP(titleBar.transform, "Gnosis Fit", 54, TXT_DARK, FontStyles.Bold, TextAlignmentOptions.Center);
         Stretch(titleTxt.gameObject);
-        // ── Filter Section ──
+
+        // ── Filter Section (Restored original stacked configuration) ──
         var filterSection = CreatePanel(bg.transform, "Filters", BG);
-        AddLE(filterSection, minH: 140);
+        AddLE(filterSection, minH: 260);
+        
         var filterVL = filterSection.AddComponent<VerticalLayoutGroup>();
         filterVL.childControlWidth = true;
         filterVL.childControlHeight = true;
         filterVL.childForceExpandWidth = true;
         filterVL.childForceExpandHeight = false;
         filterVL.spacing = 10;
-        filterVL.padding = new RectOffset(20, 20, 10, 10);
+        filterVL.padding = new RectOffset(40, 40, 15, 15);
 
         // Muscle group label + row
-        var muscleLabel = CreateTMP(filterSection.transform,
-            "Grupo Muscular", 24, TXT_GRAY, FontStyles.Normal,
-            TextAlignmentOptions.Left);
+        var muscleLabel = CreateTMP(filterSection.transform, "Grupo Muscular", 22, TXT_GRAY, FontStyles.Bold, TextAlignmentOptions.Left);
         AddLE(muscleLabel.gameObject, minH: 30);
 
         var muscleRow = CreateRow(filterSection.transform, "MuscleRow");
-        string[] muscles = { "Todos", "Pecho", "Piernas",
-                             "Espalda", "Core", "Brazos" };
+        string[] muscles = { "Todos", "Pecho", "Piernas", "Espalda", "Core", "Brazos" };
         foreach (var m in muscles)
         {
             var btn = CreateFilterBtn(muscleRow.transform, m);
@@ -130,9 +151,7 @@ public class UIMenuCatalog : MonoBehaviour
         }
 
         // Difficulty label + row
-        var diffLabel = CreateTMP(filterSection.transform,
-            "Dificultad", 24, TXT_GRAY, FontStyles.Normal,
-            TextAlignmentOptions.Left);
+        var diffLabel = CreateTMP(filterSection.transform, "Dificultad", 22, TXT_GRAY, FontStyles.Bold, TextAlignmentOptions.Left);
         AddLE(diffLabel.gameObject, minH: 30);
 
         var diffRow = CreateRow(filterSection.transform, "DiffRow");
@@ -145,32 +164,36 @@ public class UIMenuCatalog : MonoBehaviour
             diffButtons.Add(btn);
         }
 
-        // ── ScrollView ──
+        // ── ScrollView (Workouts list) ──
         var scrollGO = CreateScrollView(bg.transform);
         contentParent = scrollGO.transform;
 
-        // ── Botón Chatbot (flotante, esquina inferior derecha) ──
-        var chatBtnGO = CreatePanel(canvasGO.transform, "BtnChatbot", new Color(0.00f, 0.75f, 0.65f, 1f));
+        // ── Floating Chatbot FAB (esquina inferior derecha) ──
+        var chatBtnGO = CreateRoundedPanel(canvasGO.transform, "BtnChatbot", BTN_AR, whiteRoundedSprite);
         var chatBtnRT = chatBtnGO.GetComponent<RectTransform>();
         chatBtnRT.anchorMin = new Vector2(1, 0);
         chatBtnRT.anchorMax = new Vector2(1, 0);
         chatBtnRT.pivot = new Vector2(1, 0);
-        chatBtnRT.sizeDelta = new Vector2(260, 80);
-        chatBtnRT.anchoredPosition = new Vector2(-30, 40);
+        chatBtnRT.sizeDelta = new Vector2(240, 75);
+        chatBtnRT.anchoredPosition = new Vector2(-40, 50);
 
-        var chatTxt = CreateTMP(chatBtnGO.transform, "💬 Chatbot", 28, Color.white,
+        var chatShadow = chatBtnGO.AddComponent<Shadow>();
+        chatShadow.effectColor = new Color(0f, 0f, 0f, 0.12f);
+        chatShadow.effectDistance = new Vector2(0f, -5f);
+
+        // Plain text "Chatbot AI" (no emoji to prevent broken square box)
+        var chatTxt = CreateTMP(chatBtnGO.transform, "Chatbot AI", 26, Color.white,
             FontStyles.Bold, TextAlignmentOptions.Center);
         Stretch(chatTxt.gameObject);
 
         var chatBtn = chatBtnGO.AddComponent<Button>();
         chatBtn.targetGraphic = chatBtnGO.GetComponent<Image>();
         var chatColors = chatBtn.colors;
-        chatColors.highlightedColor = new Color(0.0f, 0.6f, 0.5f);
-        chatColors.pressedColor = new Color(0.0f, 0.5f, 0.4f);
+        chatColors.highlightedColor = new Color(0.08f, 0.65f, 0.55f);
+        chatColors.pressedColor = new Color(0.06f, 0.55f, 0.45f);
         chatBtn.colors = chatColors;
         chatBtn.onClick.AddListener(() => SceneManager.LoadScene("ChatbotMode"));
 
-        // highlight defaults
         RefreshFilterVisuals();
         RefreshCards();
     }
@@ -198,21 +221,19 @@ public class UIMenuCatalog : MonoBehaviour
         {
             bool active = b.name == "Btn_" + currentMuscle;
             b.GetComponent<Image>().color = active ? ACTIVE_BG : INACTIVE_BG;
-            b.GetComponentInChildren<TMP_Text>().color =
-                active ? Color.white : TXT_DARK;
+            b.GetComponentInChildren<TMP_Text>().color = active ? Color.white : TXT_DARK;
         }
         foreach (var b in diffButtons)
         {
             bool active = b.name == "Btn_" + currentDiff;
             b.GetComponent<Image>().color = active ? ACTIVE_BG : INACTIVE_BG;
-            b.GetComponentInChildren<TMP_Text>().color =
-                active ? Color.white : TXT_DARK;
+            b.GetComponentInChildren<TMP_Text>().color = active ? Color.white : TXT_DARK;
         }
     }
 
     void RefreshCards()
     {
-        // Limpiar recursos 3D de las miniaturas anteriores para evitar fugas de VRAM
+        // Clean up previous 3D thumbnail resources
         foreach (var container in spawnedContainers)
         {
             if (container != null) Destroy(container);
@@ -230,15 +251,15 @@ public class UIMenuCatalog : MonoBehaviour
         spawnedRenderTextures.Clear();
         thumbnailClones.Clear();
 
-        // clear
+        // Clear children
         for (int i = contentParent.childCount - 1; i >= 0; i--)
             Destroy(contentParent.GetChild(i).gameObject);
 
+        // Filter exercise list based on muscle group and difficulty
         var filtered = allExercises.Where(e =>
-            (currentMuscle == "Todos" ||
-             e.grupoMuscular == currentMuscle) &&
-            (currentDiff == "Todas" ||
-             e.dificultad == currentDiff));
+            (currentMuscle == "Todos" || e.grupoMuscular == currentMuscle) &&
+            (currentDiff == "Todas" || e.dificultad == currentDiff)
+        );
 
         foreach (var ex in filtered)
             CreateCard(contentParent, ex);
@@ -249,41 +270,42 @@ public class UIMenuCatalog : MonoBehaviour
     // ════════════════════════════════════════
     void CreateCard(Transform parent, ExerciseData data)
     {
-        // Card root
-        var card = CreatePanel(parent, "Card_" + data.nombre, CARD_BG);
-        AddLE(card, minH: 200);
+        // Card rounded root panel (using procedural cardRoundedSprite)
+        var card = CreateRoundedPanel(parent, "Card_" + data.nombre, CARD_BG, cardRoundedSprite);
+        AddLE(card, minH: 240);
+        
         var hl = card.AddComponent<HorizontalLayoutGroup>();
         hl.childControlWidth = true;
         hl.childControlHeight = true;
         hl.childForceExpandWidth = false;
         hl.childForceExpandHeight = true;
-        hl.spacing = 20;
-        hl.padding = new RectOffset(20, 20, 20, 20);
+        hl.spacing = 25;
+        hl.padding = new RectOffset(25, 25, 25, 25);
         hl.childAlignment = TextAnchor.MiddleLeft;
 
-        // shadow
+        // Card soft shadow
         var shadow = card.AddComponent<Shadow>();
-        shadow.effectColor = new Color(0, 0, 0, 0.15f);
-        shadow.effectDistance = new Vector2(0, -3);
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.05f);
+        shadow.effectDistance = new Vector2(0f, -4f);
 
-        // ── Image placeholder ──
-        var imgGO = CreatePanel(card.transform, "ImgPlaceholder", new Color(0.9f, 0.92f, 0.95f, 1f)); // Light steel-blue background
-        AddLE(imgGO, minW: 160, minH: 160);
-        imgGO.AddComponent<RectMask2D>(); // Clip the 3D model cleanly
+        // ── 3D Thumbnail Panel (Rounded steel-blue background using procedural whiteRoundedSprite) ──
+        var imgGO = CreateRoundedPanel(card.transform, "ImgPlaceholder", IMG_PH, whiteRoundedSprite);
+        AddLE(imgGO, minW: 190, minH: 190);
+        imgGO.AddComponent<RectMask2D>(); // Clean clipping of 3D avatar
 
-        // 3D Thumbnail RawImage
+        // 3D RawImage
         var rawImgGO = new GameObject("Thumbnail3D", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
         rawImgGO.transform.SetParent(imgGO.transform, false);
         Stretch(rawImgGO);
         var rawImg = rawImgGO.GetComponent<RawImage>();
 
-        // Configurar la vista previa en 3D
+        // Run character 3D preview
         ConfigurarPreview3D(rawImg, data.idControlador);
 
-        // ── Info column ──
-        var infoGO = CreatePanel(card.transform, "InfoCol",
-            new Color(1, 1, 1, 0));
+        // ── Information Column ──
+        var infoGO = CreatePanel(card.transform, "InfoCol", new Color(1f, 1f, 1f, 0f));
         AddLE(infoGO, flexW: 1);
+        
         var vl = infoGO.AddComponent<VerticalLayoutGroup>();
         vl.childControlWidth = true;
         vl.childControlHeight = true;
@@ -293,27 +315,24 @@ public class UIMenuCatalog : MonoBehaviour
         vl.padding = new RectOffset(0, 0, 5, 5);
         vl.childAlignment = TextAnchor.MiddleLeft;
 
-        // title
-        var title = CreateTMP(infoGO.transform, data.nombre,
-            36, TXT_DARK, FontStyles.Bold, TextAlignmentOptions.Left);
+        // Title
+        var title = CreateTMP(infoGO.transform, data.nombre, 34, TXT_DARK, FontStyles.Bold, TextAlignmentOptions.Left);
         AddLE(title.gameObject, minH: 45);
 
-        // subtitle
-        var sub = CreateTMP(infoGO.transform,
-            data.grupoMuscular + " · " + data.dificultad,
-            26, TXT_GRAY, FontStyles.Normal,
-            TextAlignmentOptions.Left);
+        // Subtitle (Grupo Muscular & Dificultad)
+        var sub = CreateTMP(infoGO.transform, data.grupoMuscular + " - " + data.dificultad, 24, TXT_GRAY, FontStyles.Normal, TextAlignmentOptions.Left);
         AddLE(sub.gameObject, minH: 35);
 
-        // spacer
+        // Spacer
         var spacer = new GameObject("Spacer", typeof(RectTransform));
         spacer.transform.SetParent(infoGO.transform, false);
         AddLE(spacer, flexH: 1);
 
-        // Buttons Row
+        // Side-by-side buttons row
         var buttonsRow = new GameObject("ButtonsRow", typeof(RectTransform));
         buttonsRow.transform.SetParent(infoGO.transform, false);
-        AddLE(buttonsRow, minH: 50);
+        AddLE(buttonsRow, minH: 60);
+        
         var btnHL = buttonsRow.AddComponent<HorizontalLayoutGroup>();
         btnHL.childControlWidth = true;
         btnHL.childControlHeight = true;
@@ -321,31 +340,29 @@ public class UIMenuCatalog : MonoBehaviour
         btnHL.childForceExpandHeight = true;
         btnHL.spacing = 15;
 
-        // AR button
-        var btnAR_GO = CreatePanel(buttonsRow.transform, "BtnAR", BTN_AR);
-        var btnTxtAR = CreateTMP(btnAR_GO.transform, "Ver en RA",
-            20, Color.white, FontStyles.Bold,
-            TextAlignmentOptions.Center);
+        // AR Button
+        var btnAR_GO = CreateRoundedPanel(buttonsRow.transform, "BtnAR", BTN_AR, whiteRoundedSprite);
+        var btnTxtAR = CreateTMP(btnAR_GO.transform, "Ver en AR", 21, Color.white, FontStyles.Bold, TextAlignmentOptions.Center);
         Stretch(btnTxtAR.gameObject);
+        
         var btnAR = btnAR_GO.AddComponent<Button>();
         btnAR.targetGraphic = btnAR_GO.GetComponent<Image>();
         var colorsAR = btnAR.colors;
-        colorsAR.highlightedColor = new Color(0.1f, 0.6f, 0.5f);
-        colorsAR.pressedColor = new Color(0.08f, 0.5f, 0.4f);
+        colorsAR.highlightedColor = new Color(0.08f, 0.65f, 0.55f);
+        colorsAR.pressedColor = new Color(0.06f, 0.55f, 0.45f);
         btnAR.colors = colorsAR;
         btnAR.onClick.AddListener(() => GoToAR(data));
 
-        // Posture Correction button
-        var btnPosGO = CreatePanel(buttonsRow.transform, "BtnPosture", BTN_POSTURE);
-        var btnTxtPos = CreateTMP(btnPosGO.transform, "Corregir Postura",
-            20, Color.white, FontStyles.Bold,
-            TextAlignmentOptions.Center);
+        // Posture Correction Button
+        var btnPosGO = CreateRoundedPanel(buttonsRow.transform, "BtnPosture", BTN_POSTURE, whiteRoundedSprite);
+        var btnTxtPos = CreateTMP(btnPosGO.transform, "Corregir Postura", 21, Color.white, FontStyles.Bold, TextAlignmentOptions.Center);
         Stretch(btnTxtPos.gameObject);
+        
         var btnPos = btnPosGO.AddComponent<Button>();
         btnPos.targetGraphic = btnPosGO.GetComponent<Image>();
         var colorsPos = btnPos.colors;
-        colorsPos.highlightedColor = new Color(0.7f, 0.35f, 0.1f);
-        colorsPos.pressedColor = new Color(0.6f, 0.3f, 0.1f);
+        colorsPos.highlightedColor = new Color(0.75f, 0.35f, 0.10f);
+        colorsPos.pressedColor = new Color(0.65f, 0.30f, 0.08f);
         btnPos.colors = colorsPos;
         btnPos.onClick.AddListener(() => GoToSupervision(data));
     }
@@ -375,22 +392,29 @@ public class UIMenuCatalog : MonoBehaviour
     }
 
     // ════════════════════════════════════════
-    //  UI HELPERS
+    //  UI HELPERS & PROCEDURAL GENERATORS
     // ════════════════════════════════════════
     GameObject CreatePanel(Transform parent, string name, Color color)
     {
-        var go = new GameObject(name, typeof(RectTransform),
-            typeof(CanvasRenderer), typeof(Image));
+        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         go.transform.SetParent(parent, false);
         go.GetComponent<Image>().color = color;
         return go;
     }
 
-    TMP_Text CreateTMP(Transform parent, string text, float size,
-        Color color, FontStyles style, TextAlignmentOptions align)
+    GameObject CreateRoundedPanel(Transform parent, string name, Color color, Sprite customSprite)
     {
-        var go = new GameObject("Txt", typeof(RectTransform),
-            typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        var go = CreatePanel(parent, name, Color.white); // Image color must be White to allow tint multiplication
+        var img = go.GetComponent<Image>();
+        img.sprite = customSprite;
+        img.type = Image.Type.Sliced;
+        img.color = color; // Apply tint color programmatically
+        return go;
+    }
+
+    TMP_Text CreateTMP(Transform parent, string text, float size, Color color, FontStyles style, TextAlignmentOptions align)
+    {
+        var go = new GameObject("Txt", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         go.transform.SetParent(parent, false);
         var tmp = go.GetComponent<TextMeshProUGUI>();
         tmp.text = text;
@@ -398,7 +422,7 @@ public class UIMenuCatalog : MonoBehaviour
         tmp.color = color;
         tmp.fontStyle = style;
         tmp.alignment = align;
-        tmp.enableWordWrapping = true;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
         tmp.overflowMode = TextOverflowModes.Ellipsis;
         return tmp;
     }
@@ -412,8 +436,7 @@ public class UIMenuCatalog : MonoBehaviour
         rt.anchoredPosition = Vector2.zero;
     }
 
-    void AddLE(GameObject go, float minW = -1, float minH = -1,
-        float flexW = -1, float flexH = -1)
+    void AddLE(GameObject go, float minW = -1, float minH = -1, float flexW = -1, float flexH = -1)
     {
         var le = go.GetComponent<LayoutElement>();
         if (le == null) le = go.AddComponent<LayoutElement>();
@@ -425,11 +448,12 @@ public class UIMenuCatalog : MonoBehaviour
 
     Button CreateFilterBtn(Transform parent, string label)
     {
-        var go = CreatePanel(parent, "Btn_" + label, INACTIVE_BG);
-        AddLE(go, minH: 40, flexW: 1);
-        var txt = CreateTMP(go.transform, label, 20, TXT_DARK,
-            FontStyles.Normal, TextAlignmentOptions.Center);
+        var go = CreateRoundedPanel(parent, "Btn_" + label, INACTIVE_BG, whiteRoundedSprite);
+        AddLE(go, minH: 48, flexW: 1); // 48 height, expandable width
+        
+        var txt = CreateTMP(go.transform, label, 20, TXT_DARK, FontStyles.Normal, TextAlignmentOptions.Center);
         Stretch(txt.gameObject);
+        
         var btn = go.AddComponent<Button>();
         btn.targetGraphic = go.GetComponent<Image>();
         return btn;
@@ -439,7 +463,7 @@ public class UIMenuCatalog : MonoBehaviour
     {
         var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
-        AddLE(go, minH: 45);
+        AddLE(go, minH: 48);
         var hl = go.AddComponent<HorizontalLayoutGroup>();
         hl.childControlWidth = true;
         hl.childControlHeight = true;
@@ -451,11 +475,11 @@ public class UIMenuCatalog : MonoBehaviour
 
     Transform CreateScrollView(Transform parent)
     {
-        // scroll root
-        var scrollGO = new GameObject("ScrollView",
-            typeof(RectTransform), typeof(ScrollRect));
+        // Scroll Root
+        var scrollGO = new GameObject("ScrollView", typeof(RectTransform), typeof(ScrollRect));
         scrollGO.transform.SetParent(parent, false);
         AddLE(scrollGO, flexH: 1);
+        
         var scrollRT = scrollGO.GetComponent<RectTransform>();
         scrollRT.anchorMin = Vector2.zero;
         scrollRT.anchorMax = Vector2.one;
@@ -466,9 +490,8 @@ public class UIMenuCatalog : MonoBehaviour
         sr.vertical = true;
         sr.movementType = ScrollRect.MovementType.Elastic;
 
-        // viewport
-        var viewport = new GameObject("Viewport",
-            typeof(RectTransform), typeof(RectMask2D));
+        // Viewport
+        var viewport = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
         viewport.transform.SetParent(scrollGO.transform, false);
         var vpRT = viewport.GetComponent<RectTransform>();
         vpRT.anchorMin = Vector2.zero;
@@ -476,7 +499,7 @@ public class UIMenuCatalog : MonoBehaviour
         vpRT.sizeDelta = Vector2.zero;
         sr.viewport = vpRT;
 
-        // content
+        // Content
         var content = new GameObject("Content", typeof(RectTransform));
         content.transform.SetParent(viewport.transform, false);
         var cRT = content.GetComponent<RectTransform>();
@@ -491,7 +514,7 @@ public class UIMenuCatalog : MonoBehaviour
         vl.childForceExpandWidth = true;
         vl.childForceExpandHeight = false;
         vl.spacing = 24;
-        vl.padding = new RectOffset(30, 30, 20, 40);
+        vl.padding = new RectOffset(40, 40, 20, 40);
 
         var csf = content.AddComponent<ContentSizeFitter>();
         csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -506,7 +529,6 @@ public class UIMenuCatalog : MonoBehaviour
     {
         if (characterDb == null || characterDb.avataresPrefabs == null || characterDb.avataresPrefabs.Length == 0)
         {
-            // Fallback: mostrar emoji si la base de datos de personajes no está disponible
             var fallbackGO = new GameObject("FallbackEmoji", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
             fallbackGO.transform.SetParent(rawImg.transform, false);
             Stretch(fallbackGO);
@@ -518,28 +540,27 @@ public class UIMenuCatalog : MonoBehaviour
             return;
         }
 
-        // 1. Crear RenderTexture ultra liviana (128x128) para un excelente rendimiento móvil
+        // Create low-resolution RenderTexture
         RenderTexture rt = new RenderTexture(128, 128, 16, RenderTextureFormat.ARGB32);
         rt.Create();
         rawImg.texture = rt;
         spawnedRenderTextures.Add(rt);
 
-        // 2. Colocar cada avatar en una coordenada horizontal única para evitar solapamientos visuales en el renderizado
+        // Position avatar
         float offsetUnit = idEjercicio * 15f;
         Vector3 posClon = new Vector3(offsetUnit, -2000f, 0f);
 
-        // 3. Crear contenedor del clon
         GameObject contenedor = new GameObject("ContenedorPreview_" + idEjercicio);
         contenedor.transform.position = posClon;
         spawnedContainers.Add(contenedor);
 
-        // 4. Instanciar avatar base
+        // Instantiate clone
         GameObject clon = Instantiate(characterDb.avataresPrefabs[0], posClon, Quaternion.identity, contenedor.transform);
         clon.name = "Clon_" + idEjercicio;
-        clon.transform.rotation = Quaternion.Euler(0f, 140f, 0f); // Ángulo 3/4 inicial
+        clon.transform.rotation = Quaternion.Euler(0f, 140f, 0f);
         thumbnailClones.Add(clon.transform);
 
-        // 5. Configurar animación del ejercicio correspondiente
+        // Setup animator
         var animator = clon.GetComponent<Animator>();
         int controllerIndex = idEjercicio;
         if (controllerIndex < 0 || characterDb.ejerciciosControllers == null || controllerIndex >= characterDb.ejerciciosControllers.Length)
@@ -552,22 +573,22 @@ public class UIMenuCatalog : MonoBehaviour
             animator.runtimeAnimatorController = characterDb.ejerciciosControllers[controllerIndex];
         }
 
-        // 6. Crear Cámara y apuntarla al torso del avatar
+        // Camera setup centered on avatar's waist/torso
         GameObject camObj = new GameObject("CamaraPreview_" + idEjercicio, typeof(Camera));
         camObj.transform.SetParent(contenedor.transform, false);
-        camObj.transform.localPosition = new Vector3(0f, 0.55f, 2.2f); // Lowered camera height to shift character upwards
-        camObj.transform.LookAt(posClon + new Vector3(0f, 0.35f, 0f)); // Aimed lower (waist/thighs level) to center both standing and floor postures
+        camObj.transform.localPosition = new Vector3(0f, 0.55f, 2.2f);
+        camObj.transform.LookAt(posClon + new Vector3(0f, 0.35f, 0f));
 
         Camera cam = camObj.GetComponent<Camera>();
-        cam.fieldOfView = 30f; // Narrowed Field of View (from 40f to 30f) to zoom in the 3D model by 30%
+        cam.fieldOfView = 30f; // Zoomed in 3D model
         cam.targetTexture = rt;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.9f, 0.92f, 0.95f, 1f); // Fondo azul metálico claro premium (cohesivo con el tema claro)
+        cam.backgroundColor = IMG_PH; // Matching Theme 1 steel blue background
     }
 
     void Update()
     {
-        // Rotar lentamente todos los avatares miniatura para dar un efecto interactivo premium
+        // Rotate 3D avatars slowly
         float speed = 20f * Time.deltaTime;
         foreach (var clone in thumbnailClones)
         {
@@ -576,5 +597,105 @@ public class UIMenuCatalog : MonoBehaviour
                 clone.Rotate(Vector3.up, speed, Space.World);
             }
         }
+    }
+
+    // ── Procedural rounded rectangle texture generator with anti-aliasing ──
+    private Sprite CreateRoundedSprite(int width, int height, int radius, Color fillColor, Color strokeColor, float strokeWidth)
+    {
+        Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        Color[] cols = new Color[width * height];
+        
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                // Find distance from nearest corner center
+                float cx = x;
+                float cy = y;
+                if (x < radius) cx = radius;
+                else if (x >= width - radius) cx = width - radius - 1;
+                
+                if (y < radius) cy = radius;
+                else if (y >= height - radius) cy = height - radius - 1;
+                
+                Color finalColor = Color.clear;
+                
+                if (cx != x || cy != y)
+                {
+                    // Inside corner quadrant
+                    float dx = x - cx;
+                    float dy = y - cy;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                    
+                    float outerEdge = radius;
+                    float innerEdge = radius - strokeWidth;
+                    
+                    if (dist > outerEdge + 0.5f)
+                    {
+                        finalColor = Color.clear;
+                    }
+                    else if (dist > outerEdge - 0.5f)
+                    {
+                        // Outer edge anti-aliasing
+                        float t = (outerEdge + 0.5f - dist);
+                        if (strokeWidth > 0)
+                            finalColor = Color.Lerp(Color.clear, strokeColor, t);
+                        else
+                            finalColor = Color.Lerp(Color.clear, fillColor, t);
+                    }
+                    else if (strokeWidth > 0 && dist > innerEdge + 0.5f)
+                    {
+                        // Outline area
+                        finalColor = strokeColor;
+                    }
+                    else if (strokeWidth > 0 && dist > innerEdge - 0.5f)
+                    {
+                        // Inner border anti-aliasing
+                        float t = (innerEdge + 0.5f - dist);
+                        finalColor = Color.Lerp(strokeColor, fillColor, t);
+                    }
+                    else
+                    {
+                        // Fill area
+                        finalColor = fillColor;
+                    }
+                }
+                else
+                {
+                    // Central/non-corner area
+                    if (strokeWidth > 0)
+                    {
+                        float minEdgeDist = Mathf.Min(x, Mathf.Min(width - 1 - x, Mathf.Min(y, height - 1 - y)));
+                        if (minEdgeDist < strokeWidth - 0.5f)
+                        {
+                            finalColor = strokeColor;
+                        }
+                        else if (minEdgeDist < strokeWidth + 0.5f)
+                        {
+                            float t = (minEdgeDist - (strokeWidth - 0.5f));
+                            finalColor = Color.Lerp(strokeColor, fillColor, t);
+                        }
+                        else
+                        {
+                            finalColor = fillColor;
+                        }
+                    }
+                    else
+                    {
+                        finalColor = fillColor;
+                    }
+                }
+                
+                cols[y * width + x] = finalColor;
+            }
+        }
+        
+        tex.SetPixels(cols);
+        tex.Apply();
+        
+        // 9-slice borders configuration
+        Vector4 border = new Vector4(radius, radius, radius, radius);
+        Sprite sprite = Sprite.Create(tex, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.Tight, border);
+        return sprite;
     }
 }

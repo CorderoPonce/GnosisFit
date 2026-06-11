@@ -51,6 +51,7 @@ public class PlaceExample : MonoBehaviour
         {
             indiceEjercicioActual = GenosisFitDataManager.Instance.IndiceEjercicio;
         }
+        ActualizarNombreEjercicioUI();
     }
 
     void Update()
@@ -139,6 +140,47 @@ public class PlaceExample : MonoBehaviour
 
         // Solo cambiamos el "alma/cerebro", por ende NO destruimos al muñeco
         ActualizarCerebroDelModelo();
+
+        // Sincronizar el nombre del ejercicio seleccionado y actualizar el texto en la UI
+        ActualizarNombreEjercicioUI();
+    }
+
+    private void ActualizarNombreEjercicioUI()
+    {
+        string nombreEj = "";
+        TipoSupervision tipoSupervision = TipoSupervision.Generic;
+
+        var catalog = ExerciseData.ObtenerCatalogo();
+        foreach (var ej in catalog)
+        {
+            if (ej.idControlador == indiceEjercicioActual)
+            {
+                nombreEj = ej.nombre;
+                tipoSupervision = ej.tipoSupervision;
+                break;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(nombreEj))
+        {
+            if (GenosisFitDataManager.Instance != null)
+            {
+                GenosisFitDataManager.Instance.EjercicioSeleccionado = nombreEj;
+                GenosisFitDataManager.Instance.TipoEjercicio = tipoSupervision;
+                GenosisFitDataManager.Instance.IndiceEjercicio = indiceEjercicioActual;
+            }
+
+            // Buscar el texto Gnosis Fit en la escena y actualizarlo
+            GameObject textGnosis = GameObject.Find("Gnosis Fit");
+            if (textGnosis != null)
+            {
+                var tmpText = textGnosis.GetComponent<TMPro.TextMeshProUGUI>();
+                if (tmpText != null)
+                {
+                    tmpText.text = nombreEj; // Solo el nombre del ejercicio, sin "Workout Mode" ni prefijos genéricos
+                }
+            }
+        }
     }
 
     // LLAMADO POR BOTÓN: PAUSA/PLAY

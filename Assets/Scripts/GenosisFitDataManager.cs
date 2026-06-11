@@ -9,6 +9,7 @@ public class GenosisFitDataManager : MonoBehaviour
     public int IndicePersonaje = 0;
     public int IndiceEjercicio = 0;
     public bool VieneDeAR = false;
+    public string HistorialChat = "";
 
     private void Awake()
     {
