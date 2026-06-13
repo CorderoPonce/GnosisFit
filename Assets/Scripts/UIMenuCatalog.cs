@@ -174,15 +174,15 @@ public class UIMenuCatalog : MonoBehaviour
         chatBtnRT.anchorMin = new Vector2(1, 0);
         chatBtnRT.anchorMax = new Vector2(1, 0);
         chatBtnRT.pivot = new Vector2(1, 0);
-        chatBtnRT.sizeDelta = new Vector2(240, 75);
-        chatBtnRT.anchoredPosition = new Vector2(-40, 50);
+        chatBtnRT.sizeDelta = new Vector2(312, 98);
+        chatBtnRT.anchoredPosition = new Vector2(-50, 65);
 
         var chatShadow = chatBtnGO.AddComponent<Shadow>();
         chatShadow.effectColor = new Color(0f, 0f, 0f, 0.12f);
         chatShadow.effectDistance = new Vector2(0f, -5f);
 
         // Plain text "Chatbot AI" (no emoji to prevent broken square box)
-        var chatTxt = CreateTMP(chatBtnGO.transform, "Chatbot AI", 26, Color.white,
+        var chatTxt = CreateTMP(chatBtnGO.transform, "Chatbot AI", 34, Color.white,
             FontStyles.Bold, TextAlignmentOptions.Center);
         Stretch(chatTxt.gameObject);
 
