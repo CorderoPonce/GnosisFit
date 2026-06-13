@@ -116,7 +116,7 @@ public class InitSupervisionScene : MonoBehaviour
                 var rt = skeletonGO.GetComponent<RectTransform>();
                 rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
                 rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
-                skeletonGO.AddComponent<SkeletonOverlay>().Inicializar(canvas);
+                skeletonGO.AddComponent<SkeletonOverlay>().Inicializar(canvas, analisisPostura);
             }
         }
     }

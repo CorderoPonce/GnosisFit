@@ -87,8 +87,8 @@ public class EstilizadorUI : MonoBehaviour
             rt.anchorMin = new Vector2(0, 1);
             rt.anchorMax = new Vector2(0, 1);
             rt.pivot = new Vector2(0, 1);
-            rt.sizeDelta = new Vector2(90, 90);
-            rt.anchoredPosition = new Vector2(50, -50);
+            rt.sizeDelta = new Vector2(117, 117); // 30% más grande
+            rt.anchoredPosition = new Vector2(65, -65);
 
             // Estilo de tarjeta redondeada oscura translúcida (igual a la foto)
             Image img = btnVolver.GetComponent<Image>();
@@ -106,7 +106,7 @@ public class EstilizadorUI : MonoBehaviour
                 txt.gameObject.SetActive(true);
                 txt.text = "←";
                 txt.color = COLOR_BOTON_ACTIVO; // Cian
-                txt.fontSize = 44f;
+                txt.fontSize = 57f; // 30% más grande
                 txt.fontStyle = FontStyles.Bold;
                 txt.alignment = TextAlignmentOptions.Center;
             }
@@ -130,7 +130,7 @@ public class EstilizadorUI : MonoBehaviour
             rtText.anchorMax = new Vector2(0, 1);
             rtText.pivot = new Vector2(0, 1);
             rtText.sizeDelta = new Vector2(400, 100);
-            rtText.anchoredPosition = new Vector2(165, -45); // Colocado a la derecha del botón Volver
+            rtText.anchoredPosition = new Vector2(215, -55); // Ajustado a la derecha del botón Volver más grande
 
             var tmpText = textGnosis.GetComponent<TextMeshProUGUI>();
             if (tmpText != null)
@@ -154,7 +154,7 @@ public class EstilizadorUI : MonoBehaviour
                     }
                 }
                 tmpText.text = exerciseName;
-                tmpText.fontSize = 32f;
+                tmpText.fontSize = 38f; // Proporcional
                 tmpText.color = Color.white;
                 tmpText.fontStyle = FontStyles.Bold;
                 tmpText.alignment = TextAlignmentOptions.Left;
@@ -169,8 +169,8 @@ public class EstilizadorUI : MonoBehaviour
             rt.anchorMin = new Vector2(1, 0);
             rt.anchorMax = new Vector2(1, 0);
             rt.pivot = new Vector2(1, 0);
-            rt.sizeDelta = new Vector2(240, 75);
-            rt.anchoredPosition = new Vector2(-40, 50); // Mismo offset que el menú principal
+            rt.sizeDelta = new Vector2(312, 98); // 30% más grande
+            rt.anchoredPosition = new Vector2(-50, 65);
 
             // Estilo cápsula Teal redondeada
             Image img = btnChat.GetComponent<Image>();
@@ -194,7 +194,7 @@ public class EstilizadorUI : MonoBehaviour
                 txt.gameObject.SetActive(true);
                 txt.text = "Chatbot AI";
                 txt.color = Color.white;
-                txt.fontSize = 26f;
+                txt.fontSize = 34f; // 30% más grande
                 txt.fontStyle = FontStyles.Bold;
                 txt.alignment = TextAlignmentOptions.Center;
                 Stretch(txt.gameObject);
@@ -224,8 +224,8 @@ public class EstilizadorUI : MonoBehaviour
             rt.anchorMin = new Vector2(0.5f, 0);
             rt.anchorMax = new Vector2(0.5f, 0);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(120, 120);
-            rt.anchoredPosition = new Vector2(0, 110);
+            rt.sizeDelta = new Vector2(156, 156); // 30% más grande
+            rt.anchoredPosition = new Vector2(0, 143);
 
             // Estilo circular oscuro translúcido
             Image img = btnCamara.GetComponent<Image>();
@@ -256,7 +256,7 @@ public class EstilizadorUI : MonoBehaviour
                 RectTransform iconRT = iconGO.GetComponent<RectTransform>();
                 iconRT.anchorMin = Vector2.zero;
                 iconRT.anchorMax = Vector2.one;
-                iconRT.sizeDelta = new Vector2(-40, -40); // Margen
+                iconRT.sizeDelta = new Vector2(-52, -52); // Proporcional
                 iconRT.anchoredPosition = Vector2.zero;
 
                 Image iconImg = iconGO.GetComponent<Image>();

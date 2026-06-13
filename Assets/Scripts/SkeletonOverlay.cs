@@ -51,6 +51,12 @@ public class SkeletonOverlay : MonoBehaviour
 
     private float _umbralConfianza = 0.3f; 
 
+    // Suavizado temporal de landmarks (33 puntos)
+    private Vector2[] _posicionesSuavizadas = new Vector2[33];
+    private float[] _confianzasSuavizadas = new float[33];
+    private float[] _profundidadesSuavizadas = new float[33];
+    private bool[] _inicializadoLandmark = new bool[33];
+
     public void Inicializar(Canvas canvas, AnalisisPostura analisis = null)
     {
         _analisisPostura = analisis;
@@ -164,6 +170,7 @@ public class SkeletonOverlay : MonoBehaviour
         }
 
         var cuerpo = result.poseLandmarks[0].landmarks;
+        var cuerpoMundo = (result.poseWorldLandmarks != null && result.poseWorldLandmarks.Count > 0) ? result.poseWorldLandmarks[0].landmarks : null;
         if (!mostrarEsqueleto || cuerpo == null || cuerpo.Count < 33)
         {
             OcultarTodo();
@@ -172,17 +179,50 @@ public class SkeletonOverlay : MonoBehaviour
 
         Vector2 canvasSize = _rectTransform.rect.size;
 
-        // Dibujar los 33 puntos
+        // Dibujar y suavizar los 33 puntos con efecto de profundidad 3D
         for (int i = 0; i < 33 && i < _puntos.Count; i++)
         {
             var lm = cuerpo[i];
-            float x = lm.x * canvasSize.x;
-            float y = (1f - lm.y) * canvasSize.y; 
+            float confianzaRaw = lm.visibility ?? lm.presence ?? 1f;
+
+            float xRaw = lm.x * canvasSize.x;
+            float yRaw = (1f - lm.y) * canvasSize.y;
+            Vector2 posRaw = new Vector2(xRaw, yRaw);
+            
+            float zRaw = (cuerpoMundo != null && cuerpoMundo.Count > i) ? cuerpoMundo[i].z : 0f;
+
+            if (!_inicializadoLandmark[i])
+            {
+                _posicionesSuavizadas[i] = posRaw;
+                _confianzasSuavizadas[i] = confianzaRaw;
+                _profundidadesSuavizadas[i] = zRaw;
+                _inicializadoLandmark[i] = true;
+            }
+            else
+            {
+                _posicionesSuavizadas[i] = Vector2.Lerp(_posicionesSuavizadas[i], posRaw, 0.40f);
+                _confianzasSuavizadas[i] = Mathf.Lerp(_confianzasSuavizadas[i], confianzaRaw, 0.25f);
+                _profundidadesSuavizadas[i] = Mathf.Lerp(_profundidadesSuavizadas[i], zRaw, 0.30f);
+            }
+
+            float confianza = _confianzasSuavizadas[i];
+            Vector2 pos = _posicionesSuavizadas[i];
+            float z = _profundidadesSuavizadas[i];
+
+            // Ocultar por completo si la confianza es críticamente baja para evitar que salte/se bugee
+            if (confianza < 0.25f)
+            {
+                _puntos[i].gameObject.SetActive(false);
+                continue;
+            }
 
             var rt = _puntos[i].GetComponent<RectTransform>();
-            rt.anchoredPosition = new Vector2(x, y);
+            rt.anchoredPosition = pos;
 
-            float confianza = lm.visibility ?? lm.presence ?? 1f;
+            // Escala y opacidad por profundidad 3D (Z es menor al acercarse a la cámara)
+            float escala3D = Mathf.Clamp(1.0f - (z * 0.8f), 0.5f, 1.5f);
+            float alpha3D = Mathf.Clamp(1.0f - (z * 0.4f), 0.4f, 1.0f);
+
             Color colorBase = ObtenerColorLandmark(i);
 
             // NUEVO: Cambiar color del punto si es una zona activa del ejercicio
@@ -194,47 +234,49 @@ public class SkeletonOverlay : MonoBehaviour
                 }
             }
 
-            if (confianza < _umbralConfianza)
+            // Umbral de advertencia de confianza
+            if (confianza < 0.45f)
             {
                 _puntos[i].color = COLOR_PUNTO_BAJA_CONF;
-                rt.sizeDelta = new Vector2(radioLandmark * 0.6f, radioLandmark * 0.6f);
+                rt.sizeDelta = new Vector2(radioLandmark * 0.6f * escala3D, radioLandmark * 0.6f * escala3D);
             }
             else
             {
-                colorBase.a = Mathf.Lerp(0.5f, 1f, confianza);
+                float alphaBase = Mathf.Lerp(0.5f, 1f, confianza);
+                colorBase.a = alphaBase * alpha3D;
                 _puntos[i].color = colorBase;
-                rt.sizeDelta = new Vector2(radioLandmark, radioLandmark);
+                rt.sizeDelta = new Vector2(radioLandmark * escala3D, radioLandmark * escala3D);
             }
 
             _puntos[i].gameObject.SetActive(true);
         }
 
-        // Dibujar las conexiones
+        // Dibujar las conexiones usando posiciones, confianzas y profundidades suavizadas (efecto 3D)
         int numConexiones = CONEXIONES.GetLength(0);
         for (int i = 0; i < numConexiones && i < _lineas.Count; i++)
         {
             int idxA = CONEXIONES[i, 0];
             int idxB = CONEXIONES[i, 1];
 
-            var lmA = cuerpo[idxA];
-            var lmB = cuerpo[idxB];
+            float confA = _confianzasSuavizadas[idxA];
+            float confB = _confianzasSuavizadas[idxB];
 
-            float confA = lmA.visibility ?? lmA.presence ?? 1f;
-            float confB = lmB.visibility ?? lmB.presence ?? 1f;
-
-            if (confA < _umbralConfianza * 0.5f || confB < _umbralConfianza * 0.5f)
+            // Ocultar líneas si alguno de los extremos no es confiable (evita líneas estiradas locas)
+            if (confA < 0.30f || confB < 0.30f)
             {
                 _lineas[i].gameObject.SetActive(false);
                 continue;
             }
 
-            float xA = lmA.x * canvasSize.x;
-            float yA = (1f - lmA.y) * canvasSize.y;
-            float xB = lmB.x * canvasSize.x;
-            float yB = (1f - lmB.y) * canvasSize.y;
+            Vector2 posA = _posicionesSuavizadas[idxA];
+            Vector2 posB = _posicionesSuavizadas[idxB];
+            
+            float zA = _profundidadesSuavizadas[idxA];
+            float zB = _profundidadesSuavizadas[idxB];
+            float zPromedio = (zA + zB) / 2f;
 
-            Vector2 posA = new Vector2(xA, yA);
-            Vector2 posB = new Vector2(xB, yB);
+            float escala3DLinea = Mathf.Clamp(1.0f - (zPromedio * 0.8f), 0.5f, 1.5f);
+            float alpha3DLinea = Mathf.Clamp(1.0f - (zPromedio * 0.4f), 0.4f, 1.0f);
 
             var rtLinea = _lineas[i].GetComponent<RectTransform>();
             Vector2 diff = posB - posA;
@@ -242,7 +284,7 @@ public class SkeletonOverlay : MonoBehaviour
             float angulo = Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg;
 
             rtLinea.anchoredPosition = posA;
-            rtLinea.sizeDelta = new Vector2(distancia, grosorLinea);
+            rtLinea.sizeDelta = new Vector2(distancia, grosorLinea * escala3DLinea);
             rtLinea.localRotation = Quaternion.Euler(0, 0, angulo);
 
             Color colorLinea = ObtenerColorConexion(idxA, idxB);
@@ -257,7 +299,8 @@ public class SkeletonOverlay : MonoBehaviour
             }
 
             float confMin = Mathf.Min(confA, confB);
-            colorLinea.a = Mathf.Lerp(0.3f, 0.8f, confMin);
+            float alphaBaseLinea = Mathf.Lerp(0.3f, 0.8f, confMin);
+            colorLinea.a = alphaBaseLinea * alpha3DLinea;
             _lineas[i].color = colorLinea;
 
             _lineas[i].gameObject.SetActive(true);
@@ -270,6 +313,11 @@ public class SkeletonOverlay : MonoBehaviour
             if (p != null) p.gameObject.SetActive(false);
         foreach (var l in _lineas)
             if (l != null) l.gameObject.SetActive(false);
+
+        for (int i = 0; i < 33; i++)
+        {
+            _inicializadoLandmark[i] = false;
+        }
     }
 
     private Color ObtenerColorLandmark(int idx)
