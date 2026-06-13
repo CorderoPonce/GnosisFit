@@ -23,5 +23,5 @@ EditorBuildSettings:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 586a9ae8bacc9e14a8eb642c812cfd95, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 29133e2796cf2884eb57a1bda93176d4, type: 2}
-    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 7740e37108197384e896fa749ada276d, type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: db0b47dfbe0d7f34699c963636d97055, type: 2}
   m_UseUCBPForAssetBundles: 0

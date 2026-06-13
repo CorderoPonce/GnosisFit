@@ -59,7 +59,8 @@ public class AnalisisPostura : MonoBehaviour
     private FaseRep faseActualDer = FaseRep.Inicio;
     private float _tiempoInicioRepIzq = 0f;
     private float _tiempoInicioRepDer = 0f;
-    private float _ultimoRepTime = 0f;
+    private float _ultimoRepTimeDer = 0f;
+    private float _ultimoRepTimeIzq = 0f;
     private Queue<float> _historiaAnguloIzq = new Queue<float>();
     private Queue<float> _historiaAnguloDer = new Queue<float>();
 
@@ -89,7 +90,8 @@ public class AnalisisPostura : MonoBehaviour
         faseActualDer = FaseRep.Inicio;
         _tiempoInicioRepIzq = 0f;
         _tiempoInicioRepDer = 0f;
-        _ultimoRepTime = 0f;
+        _ultimoRepTimeDer = 0f;
+        _ultimoRepTimeIzq = 0f;
         _historiaAnguloIzq.Clear();
         _historiaAnguloDer.Clear();
 
@@ -112,11 +114,11 @@ public class AnalisisPostura : MonoBehaviour
                 vistaRequerida = VistaRequerida.Perfil;
                 break;
             case TipoSupervision.JumpingJack:
-                umbralInferior = 0.3f; umbralSuperior = 0.8f;
+                umbralInferior = 0.6f; umbralSuperior = 1.2f; // Ratios normalizados por altura de torso
                 vistaRequerida = VistaRequerida.Frente;
                 break;
             case TipoSupervision.SaltosCruzados:
-                umbralInferior = 0.3f; umbralSuperior = 0.7f;
+                umbralInferior = 0.5f; umbralSuperior = 1.1f; // Ratios normalizados por altura de torso
                 vistaRequerida = VistaRequerida.Frente;
                 break;
             case TipoSupervision.Burpee:
@@ -210,6 +212,15 @@ public class AnalisisPostura : MonoBehaviour
             }
         }
 
+        // NUEVO: Validación de confianza mínima de los landmarks clave antes de calcular ángulos
+        string msjFeedbackConfianza;
+        if (!ValidarConfianzaLandmarks(cuerpo, ejercicioActual, out msjFeedbackConfianza))
+        {
+            feedback = msjFeedbackConfianza;
+            colorFeedback = Color.yellow;
+            return;
+        }
+
         switch (ejercicioActual)
         {
             case TipoSupervision.BicepCurl:    EvaluarBicepCurl(cuerpo, cuerpoMundo);    break;
@@ -253,6 +264,83 @@ public class AnalisisPostura : MonoBehaviour
     }
 
 
+    private bool ValidarConfianzaLandmarks(IList<NormalizedLandmark> cuerpo, TipoSupervision tipo, out string msjFeedback)
+    {
+        msjFeedback = "";
+        switch (tipo)
+        {
+            case TipoSupervision.BicepCurl:
+                {
+                    float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[13].visibility ?? 0f) + (cuerpo[15].visibility ?? 0f)) / 3f;
+                    float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[14].visibility ?? 0f) + (cuerpo[16].visibility ?? 0f)) / 3f;
+                    if (confIzq < 0.4f || confDer < 0.4f)
+                    {
+                        msjFeedback = "Ajusta tu posición — codos o manos no visibles";
+                        return false;
+                    }
+                }
+                break;
+            case TipoSupervision.AirSquat:
+                {
+                    float confIzq = ((cuerpo[23].visibility ?? 0f) + (cuerpo[25].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 3f;
+                    float confDer = ((cuerpo[24].visibility ?? 0f) + (cuerpo[26].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 3f;
+                    if (confIzq < 0.4f && confDer < 0.4f)
+                    {
+                        msjFeedback = "Ajusta tu posición — rodillas o tobillos no visibles";
+                        return false;
+                    }
+                }
+                break;
+            case TipoSupervision.PushUp:
+                {
+                    float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[13].visibility ?? 0f) + (cuerpo[15].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 5f;
+                    float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[14].visibility ?? 0f) + (cuerpo[16].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 5f;
+                    if (confIzq < 0.4f && confDer < 0.4f)
+                    {
+                        msjFeedback = "Ajusta tu posición — codos o cadera no visibles";
+                        return false;
+                    }
+                }
+                break;
+            case TipoSupervision.JumpingJack:
+            case TipoSupervision.SaltosCruzados:
+                {
+                    float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[13].visibility ?? 0f) + (cuerpo[15].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[25].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 6f;
+                    float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[14].visibility ?? 0f) + (cuerpo[16].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[26].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 6f;
+                    if (confIzq < 0.4f || confDer < 0.4f)
+                    {
+                        msjFeedback = "Ajusta tu posición — mantén pies y manos a la vista";
+                        return false;
+                    }
+                }
+                break;
+            case TipoSupervision.Situp:
+                {
+                    float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[25].visibility ?? 0f)) / 3f;
+                    float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[26].visibility ?? 0f)) / 3f;
+                    if (confIzq < 0.4f && confDer < 0.4f)
+                    {
+                        msjFeedback = "Ajusta tu posición — torso o rodillas no visibles";
+                        return false;
+                    }
+                }
+                break;
+            case TipoSupervision.Burpee:
+            case TipoSupervision.Plank:
+                {
+                    float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 3f;
+                    float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 3f;
+                    if (confIzq < 0.4f && confDer < 0.4f)
+                    {
+                        msjFeedback = "Ajusta tu posición — cuerpo no visible";
+                        return false;
+                    }
+                }
+                break;
+        }
+        return true;
+    }
+
     private Vector2 LM(IList<NormalizedLandmark> cuerpo, int idx) { return new Vector2(cuerpo[idx].x, cuerpo[idx].y); }
 
     // Helpers 3D
@@ -276,7 +364,16 @@ public class AnalisisPostura : MonoBehaviour
     private void ProcesarRepConAngulo(float angulo, bool invertido = false)
     {
         if (_primerFrame) anguloSuavizado = angulo;
-        else anguloSuavizado = Mathf.Lerp(anguloSuavizado, angulo, SUAVIZADO);
+        else
+        {
+            // Clamp de outliers para mitigar glitches de MediaPipe (Máx 40° por frame)
+            float delta = angulo - anguloSuavizado;
+            if (Mathf.Abs(delta) > 40f)
+            {
+                angulo = anguloSuavizado + Mathf.Sign(delta) * 40f;
+            }
+            anguloSuavizado = Mathf.Lerp(anguloSuavizado, angulo, SUAVIZADO);
+        }
         anguloActual = anguloSuavizado;
         progreso = Mathf.Clamp01(Mathf.InverseLerp(invertido ? umbralInferior : umbralSuperior, invertido ? umbralSuperior : umbralInferior, anguloSuavizado));
 
@@ -328,6 +425,7 @@ public class AnalisisPostura : MonoBehaviour
     {
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16 }; 
 
+        // Revertido a 2D para mayor estabilidad en vista frontal (evita ruido de profundidad Z)
         float anguloDer = CalcularAngulo2D(cuerpo[12], cuerpo[14], cuerpo[16]);
         float anguloIzq = CalcularAngulo2D(cuerpo[11], cuerpo[13], cuerpo[15]);
 
@@ -340,7 +438,7 @@ public class AnalisisPostura : MonoBehaviour
         float rangoDer = ObtenerRango(_historiaAnguloDer);
         float rangoIzq = ObtenerRango(_historiaAnguloIzq);
 
-        // Suavizado independiente
+        // Suavizado independiente con clamp de outliers (Máx 40° por frame)
         if (_primerFrame)
         {
             anguloSuavizadoDer = anguloDer;
@@ -348,6 +446,18 @@ public class AnalisisPostura : MonoBehaviour
         }
         else
         {
+            float deltaDer = anguloDer - anguloSuavizadoDer;
+            if (Mathf.Abs(deltaDer) > 40f)
+            {
+                anguloDer = anguloSuavizadoDer + Mathf.Sign(deltaDer) * 40f;
+            }
+
+            float deltaIzq = anguloIzq - anguloSuavizadoIzq;
+            if (Mathf.Abs(deltaIzq) > 40f)
+            {
+                anguloIzq = anguloSuavizadoIzq + Mathf.Sign(deltaIzq) * 40f;
+            }
+
             anguloSuavizadoDer = Mathf.Lerp(anguloSuavizadoDer, anguloDer, SUAVIZADO);
             anguloSuavizadoIzq = Mathf.Lerp(anguloSuavizadoIzq, anguloIzq, SUAVIZADO);
         }
@@ -367,11 +477,11 @@ public class AnalisisPostura : MonoBehaviour
                 {
                     faseActualDer = FaseRep.Completado;
                     
-                    // Verificar debounce global (1.0s)
-                    if (Time.time - _ultimoRepTime > 1.0f)
+                    // MEJORA 7: Debounce por brazo (0.6s)
+                    if (Time.time - _ultimoRepTimeDer > 0.6f)
                     {
                         repeticiones++;
-                        _ultimoRepTime = Time.time;
+                        _ultimoRepTimeDer = Time.time;
                         OnRepCompletada?.Invoke();
                     }
 
@@ -402,11 +512,11 @@ public class AnalisisPostura : MonoBehaviour
                 {
                     faseActualIzq = FaseRep.Completado;
                     
-                    // Verificar debounce global (1.0s)
-                    if (Time.time - _ultimoRepTime > 1.0f)
+                    // MEJORA 7: Debounce por brazo (0.6s)
+                    if (Time.time - _ultimoRepTimeIzq > 0.6f)
                     {
                         repeticiones++;
-                        _ultimoRepTime = Time.time;
+                        _ultimoRepTimeIzq = Time.time;
                         OnRepCompletada?.Invoke();
                     }
 
@@ -483,7 +593,12 @@ public class AnalisisPostura : MonoBehaviour
         landmarksActivos = new List<int> { 23, 24, 25, 26, 27, 28 }; 
         float anguloDer = CalcularAngulo3D(LMMundo(cuerpoMundo, 24), LMMundo(cuerpoMundo, 26), LMMundo(cuerpoMundo, 28));
         float anguloIzq = CalcularAngulo3D(LMMundo(cuerpoMundo, 23), LMMundo(cuerpoMundo, 25), LMMundo(cuerpoMundo, 27));
-        float angulo = Mathf.Min(anguloDer, anguloIzq);
+        
+        // MEJORA 3: Lado más visible (mayor confianza) en perfil
+        float confDer = ((cuerpo[24].visibility ?? 0f) + (cuerpo[26].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 3f;
+        float confIzq = ((cuerpo[23].visibility ?? 0f) + (cuerpo[25].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 3f;
+        float angulo = (confDer > confIzq) ? anguloDer : anguloIzq;
+
         ProcesarRepConAngulo(angulo);
 
         if (faseActual == FaseRep.Inicio)
@@ -503,9 +618,17 @@ public class AnalisisPostura : MonoBehaviour
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 27, 28 }; 
         float anguloDer = CalcularAngulo3D(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 14), LMMundo(cuerpoMundo, 16));
         float anguloIzq = CalcularAngulo3D(LMMundo(cuerpoMundo, 11), LMMundo(cuerpoMundo, 13), LMMundo(cuerpoMundo, 15));
-        float angulo = Mathf.Min(anguloDer, anguloIzq);
+        
+        // MEJORA 3: Lado más visible (mayor confianza) en perfil
+        float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[14].visibility ?? 0f) + (cuerpo[16].visibility ?? 0f)) / 3f;
+        float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[13].visibility ?? 0f) + (cuerpo[15].visibility ?? 0f)) / 3f;
+        float angulo = (confDer > confIzq) ? anguloDer : anguloIzq;
+
         ProcesarRepConAngulo(angulo);
-        float anguloEspalda = CalcularAngulo3D(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24), LMMundo(cuerpoMundo, 28));
+
+        float anguloEspaldaDer = CalcularAngulo3D(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24), LMMundo(cuerpoMundo, 28));
+        float anguloEspaldaIzq = CalcularAngulo3D(LMMundo(cuerpoMundo, 11), LMMundo(cuerpoMundo, 23), LMMundo(cuerpoMundo, 27));
+        float anguloEspalda = (confDer > confIzq) ? anguloEspaldaDer : anguloEspaldaIzq;
 
         if (anguloEspalda < 145f)
         {
@@ -530,18 +653,23 @@ public class AnalisisPostura : MonoBehaviour
     {
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
         
-        // Determinar si las manos están arriba en metros (Y menor es más arriba en MediaPipe)
-        bool manosArriba = LMMundo(cuerpoMundo, 15).y < (LMMundo(cuerpoMundo, 11).y + 0.1f) && 
-                           LMMundo(cuerpoMundo, 16).y < (LMMundo(cuerpoMundo, 12).y + 0.1f);
+        // Calcular altura de torso para normalización
+        float alturaTorso = Vector3.Distance(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24));
+        if (alturaTorso < 0.1f) alturaTorso = 0.5f;
+
+        // MEJORA 2: Ratios normalizados por altura de torso
+        bool manosArriba = LMMundo(cuerpoMundo, 15).y < (LMMundo(cuerpoMundo, 11).y + 0.2f * alturaTorso) && 
+                           LMMundo(cuerpoMundo, 16).y < (LMMundo(cuerpoMundo, 12).y + 0.2f * alturaTorso);
         
-        // Determinar la distancia física real de los pies en metros
         float distPiesMundo = Vector3.Distance(LMMundo(cuerpoMundo, 28), LMMundo(cuerpoMundo, 27));
-        bool piesAbiertos = distPiesMundo > 0.70f;  // Más de 70 cm
-        bool piesCerrados = distPiesMundo < 0.35f;  // Menos de 35 cm
+        float ratioPies = distPiesMundo / alturaTorso;
+
+        bool piesAbiertos = ratioPies > 1.2f;  // ratio > 1.2
+        bool piesCerrados = ratioPies < 0.6f;  // ratio < 0.6
         
         // Barra de progreso y HUD
-        if (_primerFrame) anguloSuavizado = distPiesMundo;
-        else anguloSuavizado = Mathf.Lerp(anguloSuavizado, distPiesMundo, SUAVIZADO);
+        if (_primerFrame) anguloSuavizado = ratioPies;
+        else anguloSuavizado = Mathf.Lerp(anguloSuavizado, ratioPies, SUAVIZADO);
         progreso = Mathf.Clamp01(Mathf.InverseLerp(umbralInferior, umbralSuperior, anguloSuavizado));
         anguloActual = progreso * 100f; // Escala para mostrar en UI (0%-100%)
 
@@ -600,24 +728,31 @@ public class AnalisisPostura : MonoBehaviour
     {
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
         
+        // Calcular altura de torso para normalización
+        float alturaTorso = Vector3.Distance(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24));
+        if (alturaTorso < 0.1f) alturaTorso = 0.5f;
+
         float distManosMundo = Vector3.Distance(LMMundo(cuerpoMundo, 15), LMMundo(cuerpoMundo, 16));
         float distPiesMundo = Vector3.Distance(LMMundo(cuerpoMundo, 27), LMMundo(cuerpoMundo, 28));
 
-        bool manosAbiertas = distManosMundo > 0.90f;   // 90 cm abierta
-        bool manosCruzadas = distManosMundo < 0.30f;   // 30 cm cruzada
+        float ratioManos = distManosMundo / alturaTorso;
+        float ratioPies = distPiesMundo / alturaTorso;
 
-        bool piesAbiertos = distPiesMundo > 0.60f;     // 60 cm abierta
-        bool piesCruzados = distPiesMundo < 0.30f;     // 30 cm cruzada
+        // MEJORA 2: Ratios normalizados por altura de torso
+        bool manosAbiertas = ratioManos > 1.5f;   // ~90 cm abierta (1.5x torso)
+        bool manosCruzadas = ratioManos < 0.5f;   // ~30 cm cruzada (0.5x torso)
+
+        bool piesAbiertos = ratioPies > 1.1f;     // ~60 cm abierta (1.1x torso)
+        bool piesCruzados = ratioPies < 0.5f;     // ~30 cm cruzada (0.5x torso)
 
         // Barra de progreso y HUD
-        if (_primerFrame) anguloSuavizado = distPiesMundo;
-        else anguloSuavizado = Mathf.Lerp(anguloSuavizado, distPiesMundo, SUAVIZADO);
+        if (_primerFrame) anguloSuavizado = ratioPies;
+        else anguloSuavizado = Mathf.Lerp(anguloSuavizado, ratioPies, SUAVIZADO);
         progreso = Mathf.Clamp01(Mathf.InverseLerp(umbralInferior, umbralSuperior, anguloSuavizado));
         anguloActual = progreso * 100f; // Escala para mostrar en UI (0%-100%)
 
-        // Validación extra en metros
-        bool manosMuyAltas = LMMundo(cuerpoMundo, 15).y < (LMMundo(cuerpoMundo, 11).y - 0.15f) && 
-                             LMMundo(cuerpoMundo, 16).y < (LMMundo(cuerpoMundo, 12).y - 0.15f);
+        bool manosMuyAltas = LMMundo(cuerpoMundo, 15).y < (LMMundo(cuerpoMundo, 11).y - 0.25f * alturaTorso) && 
+                             LMMundo(cuerpoMundo, 16).y < (LMMundo(cuerpoMundo, 12).y - 0.25f * alturaTorso);
 
         switch (faseActual)
         {
@@ -680,7 +815,12 @@ public class AnalisisPostura : MonoBehaviour
         landmarksActivos = new List<int> { 11, 12, 23, 24, 25, 26 };
         float anguloDer = CalcularAngulo3D(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24), LMMundo(cuerpoMundo, 26));
         float anguloIzq = CalcularAngulo3D(LMMundo(cuerpoMundo, 11), LMMundo(cuerpoMundo, 23), LMMundo(cuerpoMundo, 25));
-        float angulo = Mathf.Min(anguloDer, anguloIzq);
+        
+        // MEJORA 3: Lado más visible (mayor confianza) en perfil
+        float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[26].visibility ?? 0f)) / 3f;
+        float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[25].visibility ?? 0f)) / 3f;
+        float angulo = (confDer > confIzq) ? anguloDer : anguloIzq;
+
         ProcesarRepConAngulo(angulo);
 
         if (faseActual == FaseRep.Inicio)
@@ -698,30 +838,68 @@ public class AnalisisPostura : MonoBehaviour
     private void EvaluarBurpee(IList<NormalizedLandmark> cuerpo, IList<Landmark> cuerpoMundo)
     {
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
-        float angulo = CalcularAngulo3D(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24), LMMundo(cuerpoMundo, 28));
-        ProcesarRepConAngulo(angulo);
-        float alturaRelativa = Mathf.Abs(LMMundo(cuerpoMundo, 12).y - LMMundo(cuerpoMundo, 28).y); // Altura en metros
+        
+        // MEJORA 3: Lado más visible (mayor confianza) en perfil
+        float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 3f;
+        float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 3f;
+        
+        float anguloDer = CalcularAngulo3D(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24), LMMundo(cuerpoMundo, 28));
+        float anguloIzq = CalcularAngulo3D(LMMundo(cuerpoMundo, 11), LMMundo(cuerpoMundo, 23), LMMundo(cuerpoMundo, 27));
+        float angulo = (confDer > confIzq) ? anguloDer : anguloIzq;
 
-        if (anguloSuavizado > umbralSuperior && alturaRelativa > 1.0f) { feedback = "¡De pie! — Baja al suelo"; colorFeedback = Color.white; }
-        else if (alturaRelativa < 0.55f) { feedback = "¡En el suelo! — Empuja arriba"; colorFeedback = Color.green; }
+        ProcesarRepConAngulo(angulo);
+
+        float alturaRelativa = Mathf.Abs(LMMundo(cuerpoMundo, 12).y - LMMundo(cuerpoMundo, 28).y); // Altura en metros
+        float alturaTorso = Vector3.Distance(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24));
+        if (alturaTorso < 0.1f) alturaTorso = 0.5f;
+        float ratioAltura = alturaRelativa / alturaTorso;
+
+        if (anguloSuavizado > umbralSuperior && ratioAltura > 2.0f) { feedback = "¡De pie! — Baja al suelo"; colorFeedback = Color.white; }
+        else if (ratioAltura < 1.0f) { feedback = "¡En el suelo! — Empuja arriba"; colorFeedback = Color.green; }
         else { feedback = "Transición..."; colorFeedback = Color.cyan; }
     }
 
     private void EvaluarPlank(IList<NormalizedLandmark> cuerpo, IList<Landmark> cuerpoMundo)
     {
         landmarksActivos = new List<int> { 11, 12, 23, 24, 27, 28 };
-        float angulo = CalcularAngulo3D(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24), LMMundo(cuerpoMundo, 28));
+
+        // MEJORA 3: Lado más visible (mayor confianza) en perfil
+        float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 3f;
+        float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 3f;
+        bool usarDerecho = confDer > confIzq;
+
+        int idxShoulder = usarDerecho ? 12 : 11;
+        int idxHip = usarDerecho ? 24 : 23;
+        int idxAnkle = usarDerecho ? 28 : 27;
+
+        float angulo = CalcularAngulo3D(LMMundo(cuerpoMundo, idxShoulder), LMMundo(cuerpoMundo, idxHip), LMMundo(cuerpoMundo, idxAnkle));
+        
+        // MEJORA 5: Clamp de outliers (Máx 40° por frame)
         if (_primerFrame) anguloSuavizado = angulo;
-        else anguloSuavizado = Mathf.Lerp(anguloSuavizado, angulo, SUAVIZADO);
+        else
+        {
+            float delta = angulo - anguloSuavizado;
+            if (Mathf.Abs(delta) > 40f)
+            {
+                angulo = anguloSuavizado + Mathf.Sign(delta) * 40f;
+            }
+            anguloSuavizado = Mathf.Lerp(anguloSuavizado, angulo, SUAVIZADO);
+        }
         anguloActual = anguloSuavizado;
 
-        float yShoulder = LMMundo(cuerpoMundo, 12).y;
-        float yHip = LMMundo(cuerpoMundo, 24).y;
-        float yAnkle = LMMundo(cuerpoMundo, 28).y;
+        float yShoulder = LMMundo(cuerpoMundo, idxShoulder).y;
+        float yHip = LMMundo(cuerpoMundo, idxHip).y;
+        float yAnkle = LMMundo(cuerpoMundo, idxAnkle).y;
         float yEsperado = (yShoulder + yAnkle) / 2f;
         float difY = yHip - yEsperado; // En metros: difY > 0 es cadera caída, difY < 0 es levantada
 
-        if (anguloSuavizado > umbralInferior && Mathf.Abs(difY) < 0.12f) // Desviación máxima de 12 cm
+        float alturaTorso = Vector3.Distance(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24));
+        if (alturaTorso < 0.1f) alturaTorso = 0.5f;
+        
+        // MEJORA 2: Desviación normalizada respecto a altura del torso
+        float difYNormalizado = difY / alturaTorso;
+
+        if (anguloSuavizado > umbralInferior && Mathf.Abs(difYNormalizado) < 0.22f) // Desviación máxima de 22% del torso
         {
             tiempoEnPlank += Time.deltaTime;
             progreso = (tiempoEnPlank % TIEMPO_REP_PLANK) / TIEMPO_REP_PLANK;
@@ -731,8 +909,8 @@ public class AnalisisPostura : MonoBehaviour
         }
         else
         {
-            if (difY > 0.12f) { feedback = "Cadera muy baja — ¡Sube la pelvis!"; colorFeedback = Color.red; }
-            else if (difY < -0.12f) { feedback = "Cadera muy alta — ¡Baja la cadera!"; colorFeedback = Color.red; }
+            if (difYNormalizado > 0.22f) { feedback = "Cadera muy baja — ¡Sube la pelvis!"; colorFeedback = Color.red; }
+            else if (difYNormalizado < -0.22f) { feedback = "Cadera muy alta — ¡Baja la cadera!"; colorFeedback = Color.red; }
             else { feedback = "Alinea tu cuerpo en línea recta"; colorFeedback = Color.yellow; }
         }
     }
