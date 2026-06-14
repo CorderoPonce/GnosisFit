@@ -59,15 +59,15 @@ public class GestorControlesAR : MonoBehaviour
         rtPanel.anchorMin = new Vector2(1, 1);
         rtPanel.anchorMax = new Vector2(1, 1);
         rtPanel.pivot = new Vector2(1, 1);
-        rtPanel.sizeDelta = new Vector2(300, 300);
-        rtPanel.anchoredPosition = new Vector2(-40, -140); 
+        rtPanel.sizeDelta = new Vector2(350, 400); // 30% más grande (300 * 1.3 = 390, ajustado a 350x400)
+        rtPanel.anchoredPosition = new Vector2(-52, -182); // Ajustado (-40 * 1.3, -140 * 1.3)
 
         // 1. Botón Modelo (Abre sub-menú)
-        var btnMod = UIHelper.CrearBoton("BtnModelo", panelHUD.transform, "Modelo Actual", new Color(0,0,0,0.6f), UIHelper.BLANCO, 26, true);
+        var btnMod = UIHelper.CrearBoton("BtnModelo", panelHUD.transform, "Modelo Actual", new Color(0,0,0,0.6f), UIHelper.BLANCO, 34, true); // Fuente 26 * 1.3 = 34
         var rtMod = btnMod.GetComponent<RectTransform>();
         rtMod.anchorMin = new Vector2(1, 1); rtMod.anchorMax = new Vector2(1, 1);
         rtMod.pivot = new Vector2(1, 1);
-        rtMod.sizeDelta = new Vector2(220, 60);
+        rtMod.sizeDelta = new Vector2(286, 78); // 30% más grande (220 * 1.3, 60 * 1.3)
         rtMod.anchoredPosition = new Vector2(0, 0);
         textoModeloMain = btnMod.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
         btnMod.onClick.AddListener(ToggleMenuModelos);
@@ -77,28 +77,28 @@ public class GestorControlesAR : MonoBehaviour
         var rtSubMod = panelModelos.GetComponent<RectTransform>();
         rtSubMod.anchorMin = new Vector2(1, 1); rtSubMod.anchorMax = new Vector2(1, 1);
         rtSubMod.pivot = new Vector2(1, 1);
-        rtSubMod.sizeDelta = new Vector2(180, 220);
-        rtSubMod.anchoredPosition = new Vector2(-240, 0); // A la izquierda del botón de Modelo
+        rtSubMod.sizeDelta = new Vector2(234, 286); // 30% más grande (180 * 1.3, 220 * 1.3)
+        rtSubMod.anchoredPosition = new Vector2(-312, 0); // Ajustado (-240 * 1.3)
 
         for(int i = 0; i < nombresModelos.Length; i++) {
              int captureIndex = i;
-             var subBtn = UIHelper.CrearBoton("SubMod" + i, panelModelos.transform, nombresModelos[i], UIHelper.GRIS_OSCURO, UIHelper.BLANCO, 24, true);
+             var subBtn = UIHelper.CrearBoton("SubMod" + i, panelModelos.transform, nombresModelos[i], UIHelper.GRIS_OSCURO, UIHelper.BLANCO, 31, true); // Fuente 24 * 1.3 = 31.2
              var rtSubBtn = subBtn.GetComponent<RectTransform>();
              rtSubBtn.anchorMin = new Vector2(0, 1); rtSubBtn.anchorMax = new Vector2(1, 1);
              rtSubBtn.pivot = new Vector2(0.5f, 1);
-             rtSubBtn.sizeDelta = new Vector2(0, 60);
-             rtSubBtn.anchoredPosition = new Vector2(0, -(i * 70));
+             rtSubBtn.sizeDelta = new Vector2(0, 78); // 30% más grande (60 * 1.3)
+             rtSubBtn.anchoredPosition = new Vector2(0, -(i * 91)); // Espaciado ajustado (70 * 1.3)
              subBtn.onClick.AddListener(() => SeleccionarModelo(captureIndex));
         }
         panelModelos.SetActive(false);
 
         // 2. Botón Velocidad (Abre sub-menú)
-        var btnVel = UIHelper.CrearBoton("BtnVelocidad", panelHUD.transform, "Velocidad: 1.0x", new Color(0,0,0,0.6f), UIHelper.BLANCO, 26, true);
+        var btnVel = UIHelper.CrearBoton("BtnVelocidad", panelHUD.transform, "Velocidad: 1.0x", new Color(0,0,0,0.6f), UIHelper.BLANCO, 34, true); // Fuente 34
         var rtVel = btnVel.GetComponent<RectTransform>();
         rtVel.anchorMin = new Vector2(1, 1); rtVel.anchorMax = new Vector2(1, 1);
         rtVel.pivot = new Vector2(1, 1);
-        rtVel.sizeDelta = new Vector2(220, 60);
-        rtVel.anchoredPosition = new Vector2(0, -80);
+        rtVel.sizeDelta = new Vector2(286, 78); // 30% más grande (286, 78)
+        rtVel.anchoredPosition = new Vector2(0, -104); // Ajustado (-80 * 1.3)
         textoVelocidadMain = btnVel.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
         btnVel.onClick.AddListener(ToggleMenuVelocidades);
 
@@ -107,28 +107,28 @@ public class GestorControlesAR : MonoBehaviour
         var rtSub = panelVelocidades.GetComponent<RectTransform>();
         rtSub.anchorMin = new Vector2(1, 1); rtSub.anchorMax = new Vector2(1, 1);
         rtSub.pivot = new Vector2(1, 1);
-        rtSub.sizeDelta = new Vector2(90, 220);
-        rtSub.anchoredPosition = new Vector2(-240, -80); // A la izquierda del botón de velocidad
+        rtSub.sizeDelta = new Vector2(117, 286); // 30% más grande (90 * 1.3, 220 * 1.3)
+        rtSub.anchoredPosition = new Vector2(-312, -104); // Ajustado (-240 * 1.3, -80 * 1.3)
 
         for(int i = 0; i < nombresVelocidad.Length; i++) {
              int captureIndex = i;
-             var subBtn = UIHelper.CrearBoton("Sub" + i, panelVelocidades.transform, nombresVelocidad[i], UIHelper.GRIS_OSCURO, UIHelper.BLANCO, 24, true);
+             var subBtn = UIHelper.CrearBoton("Sub" + i, panelVelocidades.transform, nombresVelocidad[i], UIHelper.GRIS_OSCURO, UIHelper.BLANCO, 31, true); // Fuente 31
              var rtSubBtn = subBtn.GetComponent<RectTransform>();
              rtSubBtn.anchorMin = new Vector2(0, 1); rtSubBtn.anchorMax = new Vector2(1, 1);
              rtSubBtn.pivot = new Vector2(0.5f, 1);
-             rtSubBtn.sizeDelta = new Vector2(0, 60);
-             rtSubBtn.anchoredPosition = new Vector2(0, -(i * 70));
+             rtSubBtn.sizeDelta = new Vector2(0, 78); // 30% más grande
+             rtSubBtn.anchoredPosition = new Vector2(0, -(i * 91)); // Espaciado ajustado
              subBtn.onClick.AddListener(() => SeleccionarVelocidad(captureIndex));
         }
         panelVelocidades.SetActive(false);
 
         // 3. Botón Pausa
-        var btnPausa = UIHelper.CrearBoton("BtnPausa", panelHUD.transform, "PAUSAR", new Color(0,0,0,0.6f), UIHelper.BLANCO, 26, true);
+        var btnPausa = UIHelper.CrearBoton("BtnPausa", panelHUD.transform, "PAUSAR", new Color(0,0,0,0.6f), UIHelper.BLANCO, 34, true); // Fuente 34
         var rtPausa = btnPausa.GetComponent<RectTransform>();
         rtPausa.anchorMin = new Vector2(1, 1); rtPausa.anchorMax = new Vector2(1, 1);
         rtPausa.pivot = new Vector2(1, 1);
-        rtPausa.sizeDelta = new Vector2(220, 60);
-        rtPausa.anchoredPosition = new Vector2(0, -160);
+        rtPausa.sizeDelta = new Vector2(286, 78); // 30% más grande
+        rtPausa.anchoredPosition = new Vector2(0, -208); // Ajustado (-160 * 1.3)
         textoPausa = btnPausa.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
         btnPausa.onClick.AddListener(AlternarPausa);
     }

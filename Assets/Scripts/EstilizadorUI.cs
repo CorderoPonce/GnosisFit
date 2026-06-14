@@ -11,7 +11,7 @@ public class EstilizadorUI : MonoBehaviour
 {
     // Paleta de colores
     static readonly Color COLOR_NAVBAR_BG       = new Color(0.08f, 0.08f, 0.10f, 0.92f);
-    static readonly Color COLOR_BOTON_ACTIVO    = new Color(0.00f, 0.75f, 0.65f, 1f);    // Teal
+    static readonly Color COLOR_BOTON_ACTIVO    = new Color(0.10f, 0.75f, 0.65f, 1f);    // Teal (Sincronizado con UIMenuCatalog.cs BTN_AR)
     static readonly Color COLOR_BOTON_INACTIVO  = new Color(0.55f, 0.55f, 0.60f, 1f);    // Gris
     static readonly Color COLOR_PANEL_CONFIG    = new Color(0.10f, 0.10f, 0.14f, 0.95f); // Oscuro
     static readonly Color COLOR_BOTON_CONFIG    = new Color(0.18f, 0.18f, 0.24f, 1f);    // Card oscura
@@ -19,14 +19,31 @@ public class EstilizadorUI : MonoBehaviour
     static readonly Color COLOR_X_BTN           = new Color(0.9f,  0.25f, 0.25f, 1f);    // Rojo suave
     static readonly Color COLOR_CHAT_HEADER     = new Color(0.06f, 0.06f, 0.10f, 1f);
     static readonly Color COLOR_CHAT_BG         = new Color(0.12f, 0.12f, 0.18f, 1f);
-    static readonly Color COLOR_ENVIAR          = new Color(0.00f, 0.75f, 0.65f, 1f);
+    static readonly Color COLOR_ENVIAR          = new Color(0.10f, 0.75f, 0.65f, 1f);
     static readonly Color COLOR_INPUT_BG        = new Color(0.18f, 0.18f, 0.24f, 1f);
     static readonly Color COLOR_TEXT_WHITE      = new Color(0.95f, 0.95f, 0.95f, 1f);
+
+    private Sprite whiteRoundedSprite;
+
+    void Awake()
+    {
+        // Generar sprite redondeado nativo para la escena de AR
+        whiteRoundedSprite = CreateRoundedSprite(128, 128, 32, Color.white);
+    }
 
     void Start()
     {
         // Pequeña espera para que todos los componentes estén inicializados
         Invoke(nameof(AplicarEstilos), 0.05f);
+    }
+
+    void OnDestroy()
+    {
+        if (whiteRoundedSprite != null)
+        {
+            if (whiteRoundedSprite.texture != null) Destroy(whiteRoundedSprite.texture);
+            Destroy(whiteRoundedSprite);
+        }
     }
 
     void AplicarEstilos()
@@ -37,33 +54,249 @@ public class EstilizadorUI : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────
-    // 1. NAVBAR INFERIOR
+    // 1. NAVBAR INFERIOR (Reposicionamiento AR)
     // ─────────────────────────────────────────────
     void EstilizarNavbarInferior()
     {
         // Buscar la barra inferior por nombre
-        GameObject navbar = BuscarPorNombre("BarraInferior") 
+        GameObject navbar = BuscarPorNombre("HUD_Inferior")
+                         ?? BuscarPorNombre("BarraInferior") 
                          ?? BuscarPorNombre("Barra Inferior") 
                          ?? BuscarPorNombre("NavBar") 
                          ?? BuscarPorNombre("Bottom Bar")
                          ?? BuscarPorNombre("HUD Bottom")
                          ?? BuscarPorNombre("HUDBottom");
-        if (navbar == null) { Debug.Log("[EstilizadorUI] No se encontró la barra inferior (escena secundaria)."); return; }
+        if (navbar == null) { Debug.Log("[EstilizadorUI] No se encontró la barra inferior."); return; }
 
-        // Fondo oscuro con opacidad
+        // Ocultar el fondo de la barra original para que floten los botones
         Image bg = navbar.GetComponent<Image>();
-        if (bg != null) bg.color = COLOR_NAVBAR_BG;
+        if (bg != null) bg.color = Color.clear;
 
-        // Íconos: aplicar color a todos los Text/TMP hijos directos
-        foreach (Transform hijo in navbar.transform)
+        // Buscar botones específicos
+        GameObject btnVolver = BuscarPorNombre("BotonVolver") ?? BuscarPorNombre("Volver");
+        GameObject btnCamara = BuscarPorNombre("BotonCamara") ?? BuscarPorNombre("Camara");
+        GameObject btnChat = BuscarPorNombre("BotonChat") ?? BuscarPorNombre("Chat");
+
+        Transform canvasTransform = navbar.transform.parent;
+
+        // 1. Reposicionar Botón de Ir Atrás (BotonVolver) a la esquina superior izquierda
+        if (btnVolver != null)
         {
-            // Fondo de cada botón → transparente
-            Image imgBoton = hijo.GetComponent<Image>();
-            if (imgBoton != null) imgBoton.color = new Color(0, 0, 0, 0);
+            btnVolver.transform.SetParent(canvasTransform, true);
+            var rt = btnVolver.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0, 1);
+            rt.anchorMax = new Vector2(0, 1);
+            rt.pivot = new Vector2(0, 1);
+            rt.sizeDelta = new Vector2(117, 117); // 30% más grande
+            rt.anchoredPosition = new Vector2(65, -65);
 
-            // Texto/Icono → color inactivo por defecto
-            TextMeshProUGUI tmp = hijo.GetComponentInChildren<TextMeshProUGUI>();
-            if (tmp != null) tmp.color = COLOR_BOTON_INACTIVO;
+            // Estilo de tarjeta redondeada oscura translúcida (igual a la foto)
+            Image img = btnVolver.GetComponent<Image>();
+            if (img != null)
+            {
+                img.sprite = whiteRoundedSprite;
+                img.type = Image.Type.Sliced;
+                img.color = new Color(0.12f, 0.15f, 0.18f, 0.6f);
+            }
+
+            // Flecha cian limpia (←)
+            var txt = btnVolver.GetComponentInChildren<TextMeshProUGUI>(true); // Buscar incluyendo inactivos
+            if (txt != null)
+            {
+                txt.gameObject.SetActive(true);
+                txt.text = "←";
+                txt.color = COLOR_BOTON_ACTIVO; // Cian
+                txt.fontSize = 57f; // 30% más grande
+                txt.fontStyle = FontStyles.Bold;
+                txt.alignment = TextAlignmentOptions.Center;
+            }
+            else
+            {
+                // Si es un sprite, pintarlo de cian
+                foreach (Image i in btnVolver.GetComponentsInChildren<Image>(true))
+                {
+                    if (i.gameObject != btnVolver) i.color = COLOR_BOTON_ACTIVO;
+                }
+            }
+        }
+
+        // 2. Reposicionar y configurar Texto de Título al lado del Botón Volver
+        GameObject textGnosis = BuscarPorNombre("Gnosis Fit");
+        if (textGnosis != null)
+        {
+            textGnosis.transform.SetParent(canvasTransform, true);
+            var rtText = textGnosis.GetComponent<RectTransform>();
+            rtText.anchorMin = new Vector2(0, 1);
+            rtText.anchorMax = new Vector2(0, 1);
+            rtText.pivot = new Vector2(0, 1);
+            rtText.sizeDelta = new Vector2(400, 100);
+            rtText.anchoredPosition = new Vector2(215, -55); // Ajustado a la derecha del botón Volver más grande
+
+            var tmpText = textGnosis.GetComponent<TextMeshProUGUI>();
+            if (tmpText != null)
+            {
+                string exerciseName = "Sentadillas";
+                if (GenosisFitDataManager.Instance != null && !string.IsNullOrEmpty(GenosisFitDataManager.Instance.EjercicioSeleccionado))
+                {
+                    exerciseName = GenosisFitDataManager.Instance.EjercicioSeleccionado;
+                }
+                else
+                {
+                    PlaceExample placeEx = FindFirstObjectByType<PlaceExample>();
+                    if (placeEx != null)
+                    {
+                        var catalog = ExerciseData.ObtenerCatalogo();
+                        int idx = placeEx.indiceEjercicioActual;
+                        if (idx >= 0 && idx < catalog.Length)
+                        {
+                            exerciseName = catalog[idx].nombre;
+                        }
+                    }
+                }
+                tmpText.text = exerciseName;
+                tmpText.fontSize = 38f; // Proporcional
+                tmpText.color = Color.white;
+                tmpText.fontStyle = FontStyles.Bold;
+                tmpText.alignment = TextAlignmentOptions.Left;
+            }
+        }
+
+        // 3. Reposicionar Botón del Chatbot en la esquina inferior derecha (Estilo del Menú Principal)
+        if (btnChat != null)
+        {
+            btnChat.transform.SetParent(canvasTransform, true);
+            var rt = btnChat.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1, 0);
+            rt.anchorMax = new Vector2(1, 0);
+            rt.pivot = new Vector2(1, 0);
+            rt.sizeDelta = new Vector2(312, 98); // 30% más grande
+            rt.anchoredPosition = new Vector2(-50, 65);
+
+            // Estilo cápsula Teal redondeada
+            Image img = btnChat.GetComponent<Image>();
+            if (img != null)
+            {
+                img.sprite = whiteRoundedSprite;
+                img.type = Image.Type.Sliced;
+                img.color = COLOR_BOTON_ACTIVO; // Teal
+            }
+
+            // Sombra para hacerlo flotante
+            var shadow = btnChat.GetComponent<Shadow>();
+            if (shadow == null) shadow = btnChat.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.12f);
+            shadow.effectDistance = new Vector2(0f, -5f);
+
+            // Texto "Chatbot AI"
+            var txt = btnChat.GetComponentInChildren<TextMeshProUGUI>(true); // Buscar incluyendo inactivos
+            if (txt != null)
+            {
+                txt.gameObject.SetActive(true);
+                txt.text = "Chatbot AI";
+                txt.color = Color.white;
+                txt.fontSize = 34f; // 30% más grande
+                txt.fontStyle = FontStyles.Bold;
+                txt.alignment = TextAlignmentOptions.Center;
+                Stretch(txt.gameObject);
+            }
+
+            // Configurar onClick para ir a la escena del chatbot global
+            Button btnComponent = btnChat.GetComponent<Button>();
+            if (btnComponent != null)
+            {
+                btnComponent.onClick = new Button.ButtonClickedEvent(); // LIMPIAR LISTENER PERSISTENTE DEL EDITOR
+                btnComponent.onClick.AddListener(() => {
+                    if (GenosisFitDataManager.Instance != null)
+                    {
+                        GenosisFitDataManager.Instance.VieneDeAR = true; // Indicar que venimos de AR
+                    }
+                    UnityEngine.SceneManagement.SceneManager.LoadScene("ChatbotMode");
+                });
+            }
+        }
+
+        // 4. Reposicionar Botón Cámara en el centro de la pantalla abajo (HUD estándar)
+        if (btnCamara != null)
+        {
+            btnCamara.SetActive(true); // Activar para que se muestre y sea clickeable
+            btnCamara.transform.SetParent(canvasTransform, true);
+            var rt = btnCamara.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0);
+            rt.anchorMax = new Vector2(0.5f, 0);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(156, 156); // 30% más grande
+            rt.anchoredPosition = new Vector2(0, 143);
+
+            // Estilo circular oscuro translúcido
+            Image img = btnCamara.GetComponent<Image>();
+            Sprite originalCameraSprite = null;
+            if (img != null)
+            {
+                originalCameraSprite = img.sprite; // Guardar el icono de cámara original
+                img.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/Knob.psd");
+                img.type = Image.Type.Simple;
+                img.color = new Color(0.12f, 0.15f, 0.18f, 0.6f);
+            }
+
+            // Si guardamos el icono de la cámara original, crear un GameObject hijo para mostrarlo
+            if (originalCameraSprite != null)
+            {
+                Transform existingIcon = btnCamara.transform.Find("CameraIconProcedural");
+                GameObject iconGO;
+                if (existingIcon != null)
+                {
+                    iconGO = existingIcon.gameObject;
+                }
+                else
+                {
+                    iconGO = new GameObject("CameraIconProcedural", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                    iconGO.transform.SetParent(btnCamara.transform, false);
+                }
+
+                RectTransform iconRT = iconGO.GetComponent<RectTransform>();
+                iconRT.anchorMin = Vector2.zero;
+                iconRT.anchorMax = Vector2.one;
+                iconRT.sizeDelta = new Vector2(-52, -52); // Proporcional
+                iconRT.anchoredPosition = Vector2.zero;
+
+                Image iconImg = iconGO.GetComponent<Image>();
+                iconImg.sprite = originalCameraSprite;
+                iconImg.color = COLOR_BOTON_ACTIVO; // Cian
+                iconImg.raycastTarget = false;
+            }
+
+            // Cambiar iconos/dibujos del botón de cámara a color cian
+            foreach (Image i in btnCamara.GetComponentsInChildren<Image>(true))
+            {
+                if (i.gameObject != btnCamara && i.name != "CameraIconProcedural") 
+                    i.color = COLOR_BOTON_ACTIVO;
+            }
+
+            // Configurar onClick para ir a SupervisionMode sincronizando datos, como hace GestorModoSupervision
+            Button btnComponentCam = btnCamara.GetComponent<Button>();
+            if (btnComponentCam != null)
+            {
+                btnComponentCam.onClick = new Button.ButtonClickedEvent(); // LIMPIAR CUALQUIER LISTENER PERSISTENTE DEL EDITOR
+                btnComponentCam.onClick.AddListener(() => {
+                    PlaceExample placeEx = FindFirstObjectByType<PlaceExample>();
+                    if (placeEx != null && GenosisFitDataManager.Instance != null)
+                    {
+                        GenosisFitDataManager.Instance.VieneDeAR = true;
+                        GenosisFitDataManager.Instance.IndicePersonaje = placeEx.indicePersonajeActual;
+                        GenosisFitDataManager.Instance.IndiceEjercicio = placeEx.indiceEjercicioActual;
+                        foreach (var ej in ExerciseData.ObtenerCatalogo())
+                        {
+                            if (ej.idControlador == placeEx.indiceEjercicioActual)
+                            {
+                                GenosisFitDataManager.Instance.EjercicioSeleccionado = ej.nombre;
+                                GenosisFitDataManager.Instance.TipoEjercicio = ej.tipoSupervision;
+                                break;
+                            }
+                        }
+                    }
+                    UnityEngine.SceneManagement.SceneManager.LoadScene("SupervisionMode");
+                });
+            }
         }
     }
 
@@ -76,7 +309,7 @@ public class EstilizadorUI : MonoBehaviour
         GameObject panelConfig = BuscarPorNombre("MenuConfiguracion")
                               ?? BuscarPorNombre("Menu Configuracion")
                               ?? BuscarPorNombre("PanelConfiguracion");
-        if (panelConfig == null) { Debug.Log("[EstilizadorUI] No se encontró el panel de configuración (escena secundaria)."); return; }
+        if (panelConfig == null) { Debug.Log("[EstilizadorUI] No se encontró el panel de configuración."); return; }
 
         // Fondo oscuro semitransparente
         Image bg = panelConfig.GetComponent<Image>();
@@ -109,10 +342,10 @@ public class EstilizadorUI : MonoBehaviour
                 tmp.fontSize = Mathf.Max(tmp.fontSize, 18f);
             }
 
-            // Bordes redondeados (requiere sprite con borde redondeado nativo de Unity)
+            // Bordes redondeados
             if (img != null && img.sprite == null)
             {
-                img.sprite = Resources.Load<Sprite>("UI/Rounded") ?? img.sprite;
+                img.sprite = whiteRoundedSprite;
                 img.type = Image.Type.Sliced;
             }
         }
@@ -127,7 +360,7 @@ public class EstilizadorUI : MonoBehaviour
         GameObject panelChat = BuscarPorNombre("MenuChat")
                             ?? BuscarPorNombre("Panel Chat")
                             ?? BuscarPorNombre("PanelChat");
-        if (panelChat == null) { Debug.Log("[EstilizadorUI] No se encontró el panel de chat (escena secundaria)."); return; }
+        if (panelChat == null) { Debug.Log("[EstilizadorUI] No se encontró el panel de chat."); return; }
 
         // Fondo principal del chat
         Image bgChat = panelChat.GetComponent<Image>();
@@ -146,6 +379,9 @@ public class EstilizadorUI : MonoBehaviour
         // Botón X del chat → rojo
         EstilizarHijo(panelChat, "X",       COLOR_X_BTN, Color.white, true);
         EstilizarHijo(panelChat, "Cerrar",  COLOR_X_BTN, Color.white, true);
+
+        // Desactivar el panel de chat local por completo para que no sea visible ni interfiera
+        panelChat.SetActive(false);
     }
 
     // ─────────────────────────────────────────────
@@ -192,7 +428,6 @@ public class EstilizadorUI : MonoBehaviour
         string buscar = nombre.ToLower();
 
         // 1. Buscar en toda la escena incluyendo inactivos
-        // Buscamos en los Canvas de la escena recursivamente
         Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (Canvas canvas in canvases)
         {
@@ -219,5 +454,58 @@ public class EstilizadorUI : MonoBehaviour
             if (resultado != null) return resultado;
         }
         return null;
+    }
+
+    void Stretch(GameObject go)
+    {
+        var rt = go.GetComponent<RectTransform>();
+        if (rt != null)
+        {
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.sizeDelta = Vector2.zero;
+            rt.anchoredPosition = Vector2.zero;
+        }
+    }
+
+    // Generador de texturas procedimentales redondeadas suavizadas para AR
+    private Sprite CreateRoundedSprite(int width, int height, int radius, Color fillColor)
+    {
+        Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        Color[] cols = new Color[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                float cx = x;
+                float cy = y;
+                if (x < radius) cx = radius;
+                else if (x >= width - radius) cx = width - radius - 1;
+                if (y < radius) cy = radius;
+                else if (y >= height - radius) cy = height - radius - 1;
+
+                Color finalColor = Color.clear;
+                if (cx != x || cy != y)
+                {
+                    float dx = x - cx;
+                    float dy = y - cy;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                    float outerEdge = radius;
+
+                    if (dist > outerEdge + 0.5f) finalColor = Color.clear;
+                    else if (dist > outerEdge - 0.5f) finalColor = Color.Lerp(Color.clear, fillColor, (outerEdge + 0.5f - dist));
+                    else finalColor = fillColor;
+                }
+                else
+                {
+                    finalColor = fillColor;
+                }
+                cols[y * width + x] = finalColor;
+            }
+        }
+        tex.SetPixels(cols);
+        tex.Apply();
+        Vector4 border = new Vector4(radius, radius, radius, radius);
+        return Sprite.Create(tex, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.Tight, border);
     }
 }
