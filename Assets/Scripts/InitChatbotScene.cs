@@ -226,7 +226,7 @@ public class InitChatbotScene : MonoBehaviour
         inputText.color = TEXT_WHITE;
         inputText.alignment = TextAlignmentOptions.Left;
         inputText.margin = new Vector4(15, 0, 15, 0);
-        inputText.textWrappingMode = TextWrappingModes.NoWrap;
+        inputText.textWrappingMode = TextWrappingModes.PreserveWhitespace;
         Stretch(inputTextGO);
 
         // TMP_InputField component
@@ -236,6 +236,7 @@ public class InitChatbotScene : MonoBehaviour
         inputField.placeholder = placeholder;
         inputField.fontAsset = inputText.font;
         inputField.pointSize = 28;
+        inputField.lineType = TMP_InputField.LineType.MultiLineSubmit;
 
         // Botón Enviar (Cápsula Teal con Sombra Resplandor)
         var btnEnviar = CreatePanel(inputBar.transform, "BtnEnviar", Color.white);

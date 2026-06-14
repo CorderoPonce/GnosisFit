@@ -110,15 +110,15 @@ public class AnalisisPostura : MonoBehaviour
                 vistaRequerida = VistaRequerida.Perfil;
                 break;
             case TipoSupervision.Situp:
-                umbralInferior = 75f; umbralSuperior = 135f;
+                umbralInferior = 100f; umbralSuperior = 120f; // Calibrado para alta permisividad en situps/crunches (incluyendo Crunch Circular)
                 vistaRequerida = VistaRequerida.Perfil;
                 break;
             case TipoSupervision.JumpingJack:
-                umbralInferior = 0.6f; umbralSuperior = 1.2f; // Ratios normalizados por altura de torso
+                umbralInferior = 0.6f; umbralSuperior = 0.75f; // Ratios normalizados por altura de torso (Calibrado a 0.75)
                 vistaRequerida = VistaRequerida.Frente;
                 break;
             case TipoSupervision.SaltosCruzados:
-                umbralInferior = 0.5f; umbralSuperior = 1.1f; // Ratios normalizados por altura de torso
+                umbralInferior = 0.6f; umbralSuperior = 0.75f; // Ratios normalizados por altura de torso (Calibrado a 0.75)
                 vistaRequerida = VistaRequerida.Frente;
                 break;
             case TipoSupervision.Burpee:
@@ -181,37 +181,6 @@ public class AnalisisPostura : MonoBehaviour
         var cuerpoMundo = result.poseWorldLandmarks[0].landmarks;
         cuerpoDetectado = true;
 
-        // NUEVO: 1. Validación de Ángulo de Cámara basado en la proyección horizontal (delta X) de los hombros
-        if (vistaRequerida != VistaRequerida.Cualquiera)
-        {
-            // Medimos la distancia horizontal pura en X de los hombros
-            float dxHombros = Mathf.Abs(cuerpo[11].x - cuerpo[12].x);
-            
-            // Medimos la longitud vertical del torso para normalizar la escala por distancia del usuario
-            float dyTorso = Mathf.Abs((cuerpo[11].y + cuerpo[12].y) / 2f - (cuerpo[23].y + cuerpo[24].y) / 2f);
-            if (dyTorso < 0.05f) dyTorso = 0.1f; // Evitar división por cero
-
-            float relacionHombros = dxHombros / dyTorso;
-
-            // Frente: hombros ensanchados horizontalmente
-            bool esFrente = relacionHombros > 0.32f;
-            // Perfil: hombros comprimidos horizontalmente
-            bool esPerfil = relacionHombros < 0.18f;
-
-            if (vistaRequerida == VistaRequerida.Perfil && esFrente)
-            {
-                feedback = "Gírate y colócate de PERFIL a la cámara";
-                colorFeedback = Color.red;
-                return; // Bloquea el análisis si está claramente de frente
-            }
-            else if (vistaRequerida == VistaRequerida.Frente && esPerfil)
-            {
-                feedback = "Gírate y colócate de FRENTE a la cámara";
-                colorFeedback = Color.red;
-                return; // Bloquea el análisis si está claramente de perfil
-            }
-        }
-
         // NUEVO: Validación de confianza mínima de los landmarks clave antes de calcular ángulos
         string msjFeedbackConfianza;
         if (!ValidarConfianzaLandmarks(cuerpo, ejercicioActual, out msjFeedbackConfianza))
@@ -273,7 +242,7 @@ public class AnalisisPostura : MonoBehaviour
                 {
                     float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[13].visibility ?? 0f) + (cuerpo[15].visibility ?? 0f)) / 3f;
                     float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[14].visibility ?? 0f) + (cuerpo[16].visibility ?? 0f)) / 3f;
-                    if (confIzq < 0.4f || confDer < 0.4f)
+                    if (confIzq < 0.25f || confDer < 0.25f)
                     {
                         msjFeedback = "Ajusta tu posición — codos o manos no visibles";
                         return false;
@@ -284,7 +253,7 @@ public class AnalisisPostura : MonoBehaviour
                 {
                     float confIzq = ((cuerpo[23].visibility ?? 0f) + (cuerpo[25].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 3f;
                     float confDer = ((cuerpo[24].visibility ?? 0f) + (cuerpo[26].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 3f;
-                    if (confIzq < 0.4f && confDer < 0.4f)
+                    if (confIzq < 0.25f && confDer < 0.25f)
                     {
                         msjFeedback = "Ajusta tu posición — rodillas o tobillos no visibles";
                         return false;
@@ -295,7 +264,7 @@ public class AnalisisPostura : MonoBehaviour
                 {
                     float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[13].visibility ?? 0f) + (cuerpo[15].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 5f;
                     float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[14].visibility ?? 0f) + (cuerpo[16].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 5f;
-                    if (confIzq < 0.4f && confDer < 0.4f)
+                    if (confIzq < 0.25f && confDer < 0.25f)
                     {
                         msjFeedback = "Ajusta tu posición — codos o cadera no visibles";
                         return false;
@@ -307,7 +276,7 @@ public class AnalisisPostura : MonoBehaviour
                 {
                     float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[13].visibility ?? 0f) + (cuerpo[15].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[25].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 6f;
                     float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[14].visibility ?? 0f) + (cuerpo[16].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[26].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 6f;
-                    if (confIzq < 0.4f || confDer < 0.4f)
+                    if (confIzq < 0.25f || confDer < 0.25f)
                     {
                         msjFeedback = "Ajusta tu posición — mantén pies y manos a la vista";
                         return false;
@@ -318,7 +287,7 @@ public class AnalisisPostura : MonoBehaviour
                 {
                     float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[25].visibility ?? 0f)) / 3f;
                     float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[26].visibility ?? 0f)) / 3f;
-                    if (confIzq < 0.4f && confDer < 0.4f)
+                    if (confIzq < 0.25f && confDer < 0.25f)
                     {
                         msjFeedback = "Ajusta tu posición — torso o rodillas no visibles";
                         return false;
@@ -330,7 +299,7 @@ public class AnalisisPostura : MonoBehaviour
                 {
                     float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 3f;
                     float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 3f;
-                    if (confIzq < 0.4f && confDer < 0.4f)
+                    if (confIzq < 0.25f && confDer < 0.25f)
                     {
                         msjFeedback = "Ajusta tu posición — cuerpo no visible";
                         return false;
@@ -653,19 +622,31 @@ public class AnalisisPostura : MonoBehaviour
     {
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
         
-        // Calcular altura de torso para normalización
-        float alturaTorso = Vector3.Distance(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24));
-        if (alturaTorso < 0.1f) alturaTorso = 0.5f;
-
-        // MEJORA 2: Ratios normalizados por altura de torso
-        bool manosArriba = LMMundo(cuerpoMundo, 15).y < (LMMundo(cuerpoMundo, 11).y + 0.2f * alturaTorso) && 
-                           LMMundo(cuerpoMundo, 16).y < (LMMundo(cuerpoMundo, 12).y + 0.2f * alturaTorso);
+        // Usar 2D (NormalizedLandmarks) con corrección de aspecto por estabilidad frontal
+        float aspect = (float)Screen.width / (float)Screen.height;
         
-        float distPiesMundo = Vector3.Distance(LMMundo(cuerpoMundo, 28), LMMundo(cuerpoMundo, 27));
-        float ratioPies = distPiesMundo / alturaTorso;
+        Vector2 hombroIzq = new Vector2(cuerpo[11].x * aspect, cuerpo[11].y);
+        Vector2 hombroDer = new Vector2(cuerpo[12].x * aspect, cuerpo[12].y);
+        Vector2 caderaIzq = new Vector2(cuerpo[23].x * aspect, cuerpo[23].y);
+        Vector2 caderaDer = new Vector2(cuerpo[24].x * aspect, cuerpo[24].y);
+        Vector2 pieIzq = new Vector2(cuerpo[27].x * aspect, cuerpo[27].y);
+        Vector2 pieDer = new Vector2(cuerpo[28].x * aspect, cuerpo[28].y);
+        Vector2 manoIzq = new Vector2(cuerpo[15].x * aspect, cuerpo[15].y);
+        Vector2 manoDer = new Vector2(cuerpo[16].x * aspect, cuerpo[16].y);
 
-        bool piesAbiertos = ratioPies > 1.2f;  // ratio > 1.2
-        bool piesCerrados = ratioPies < 0.6f;  // ratio < 0.6
+        float alturaTorso = (Vector2.Distance(hombroIzq, caderaIzq) + Vector2.Distance(hombroDer, caderaDer)) / 2f;
+        if (alturaTorso < 0.05f) alturaTorso = 0.3f;
+
+        // Eje Y en 2D es positivo hacia abajo: manosArriba es true si Y es menor que la del hombro
+        // Calibrado a + 0.3f para ser más permisivo
+        bool manosArriba = manoIzq.y < (hombroIzq.y + 0.3f * alturaTorso) && 
+                           manoDer.y < (hombroDer.y + 0.3f * alturaTorso);
+        
+        float distPies = Vector2.Distance(pieDer, pieIzq);
+        float ratioPies = distPies / alturaTorso;
+
+        bool piesAbiertos = ratioPies > 0.75f;  // ratio > 0.75 (más permisivo)
+        bool piesCerrados = ratioPies < 0.65f;  // ratio < 0.65 (más fácil de registrar al volver)
         
         // Barra de progreso y HUD
         if (_primerFrame) anguloSuavizado = ratioPies;
@@ -728,22 +709,32 @@ public class AnalisisPostura : MonoBehaviour
     {
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
         
-        // Calcular altura de torso para normalización
-        float alturaTorso = Vector3.Distance(LMMundo(cuerpoMundo, 12), LMMundo(cuerpoMundo, 24));
-        if (alturaTorso < 0.1f) alturaTorso = 0.5f;
+        // Usar 2D (NormalizedLandmarks) con corrección de aspecto por estabilidad frontal
+        float aspect = (float)Screen.width / (float)Screen.height;
+        
+        Vector2 hombroIzq = new Vector2(cuerpo[11].x * aspect, cuerpo[11].y);
+        Vector2 hombroDer = new Vector2(cuerpo[12].x * aspect, cuerpo[12].y);
+        Vector2 caderaIzq = new Vector2(cuerpo[23].x * aspect, cuerpo[23].y);
+        Vector2 caderaDer = new Vector2(cuerpo[24].x * aspect, cuerpo[24].y);
+        Vector2 pieIzq = new Vector2(cuerpo[27].x * aspect, cuerpo[27].y);
+        Vector2 pieDer = new Vector2(cuerpo[28].x * aspect, cuerpo[28].y);
+        Vector2 manoIzq = new Vector2(cuerpo[15].x * aspect, cuerpo[15].y);
+        Vector2 manoDer = new Vector2(cuerpo[16].x * aspect, cuerpo[16].y);
 
-        float distManosMundo = Vector3.Distance(LMMundo(cuerpoMundo, 15), LMMundo(cuerpoMundo, 16));
-        float distPiesMundo = Vector3.Distance(LMMundo(cuerpoMundo, 27), LMMundo(cuerpoMundo, 28));
+        float alturaTorso = (Vector2.Distance(hombroIzq, caderaIzq) + Vector2.Distance(hombroDer, caderaDer)) / 2f;
+        if (alturaTorso < 0.05f) alturaTorso = 0.3f;
 
-        float ratioManos = distManosMundo / alturaTorso;
-        float ratioPies = distPiesMundo / alturaTorso;
+        float distManos = Vector2.Distance(manoIzq, manoDer);
+        float distPies = Vector2.Distance(pieIzq, pieDer);
 
-        // MEJORA 2: Ratios normalizados por altura de torso
-        bool manosAbiertas = ratioManos > 1.5f;   // ~90 cm abierta (1.5x torso)
-        bool manosCruzadas = ratioManos < 0.5f;   // ~30 cm cruzada (0.5x torso)
+        float ratioManos = distManos / alturaTorso;
+        float ratioPies = distPies / alturaTorso;
 
-        bool piesAbiertos = ratioPies > 1.1f;     // ~60 cm abierta (1.1x torso)
-        bool piesCruzados = ratioPies < 0.5f;     // ~30 cm cruzada (0.5x torso)
+        bool manosAbiertas = ratioManos > 1.3f;   // ~1.3x torso
+        bool manosCruzadas = ratioManos < 0.5f;   // ~0.5x torso
+
+        bool piesAbiertos = ratioPies > 0.75f;     // ~0.75x torso (más permisivo)
+        bool piesCruzados = ratioPies < 0.6f;      // ~0.6x torso (más fácil de cruzar/cerrar)
 
         // Barra de progreso y HUD
         if (_primerFrame) anguloSuavizado = ratioPies;
@@ -751,8 +742,9 @@ public class AnalisisPostura : MonoBehaviour
         progreso = Mathf.Clamp01(Mathf.InverseLerp(umbralInferior, umbralSuperior, anguloSuavizado));
         anguloActual = progreso * 100f; // Escala para mostrar en UI (0%-100%)
 
-        bool manosMuyAltas = LMMundo(cuerpoMundo, 15).y < (LMMundo(cuerpoMundo, 11).y - 0.25f * alturaTorso) && 
-                             LMMundo(cuerpoMundo, 16).y < (LMMundo(cuerpoMundo, 12).y - 0.25f * alturaTorso);
+        // Eje Y en 2D es positivo hacia abajo: manosMuyAltas si Y es menor (arriba) que hombro - offset
+        bool manosMuyAltas = manoIzq.y < (hombroIzq.y - 0.25f * alturaTorso) && 
+                             manoDer.y < (hombroDer.y - 0.25f * alturaTorso);
 
         switch (faseActual)
         {
@@ -909,8 +901,9 @@ public class AnalisisPostura : MonoBehaviour
         }
         else
         {
-            if (difYNormalizado > 0.22f) { feedback = "Cadera muy baja — ¡Sube la pelvis!"; colorFeedback = Color.red; }
-            else if (difYNormalizado < -0.22f) { feedback = "Cadera muy alta — ¡Baja la cadera!"; colorFeedback = Color.red; }
+            // Eje Y positivo es hacia arriba: difYNormalizado > 0 significa cadera levantada, difYNormalizado < 0 significa cadera caída
+            if (difYNormalizado > 0.22f) { feedback = "Cadera muy alta — ¡Baja la cadera!"; colorFeedback = Color.red; }
+            else if (difYNormalizado < -0.22f) { feedback = "Cadera muy baja — ¡Sube la pelvis!"; colorFeedback = Color.red; }
             else { feedback = "Alinea tu cuerpo en línea recta"; colorFeedback = Color.yellow; }
         }
     }

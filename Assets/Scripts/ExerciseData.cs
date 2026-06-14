@@ -66,8 +66,8 @@ public class ExerciseData
             new ExerciseData("Caminata Pike",       "Pecho",   "Alta",  11, TipoSupervision.PushUp, new Vector3(0f, 0.45f, 1.8f), new Vector3(0f, 0.25f, 0f), 45f),
             new ExerciseData("Flexiones de Brazo",  "Pecho",   "Media", 12, TipoSupervision.PushUp, new Vector3(0f, 0.45f, 1.8f), new Vector3(0f, 0.25f, 0f), 45f),
 
-            // Plancha Abdominal (Planks - Posición horizontal estática muy baja)
-            new ExerciseData("Plancha Abdominal",   "Core",    "Media", 13, TipoSupervision.Plank, new Vector3(0f, 0.35f, 1.8f), new Vector3(0f, 0.15f, 0f), 45f),
+            // Abdominales (Situps - Crunches y Abdominales)
+            new ExerciseData("Abdominales",         "Core",    "Media", 13, TipoSupervision.Situp, new Vector3(0f, 0.4f, 1.8f), new Vector3(0f, 0.2f, 0f), 45f),
 
             // Derribe / Genérico
             new ExerciseData("Derribe",             "Espalda", "Alta",  7,  TipoSupervision.Generic, new Vector3(0f, 0.9f, 1.8f), new Vector3(0f, 0.75f, 0f), 45f)

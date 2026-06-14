@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.EventSystems;
@@ -25,9 +26,14 @@ public class PlaceExample : MonoBehaviour
     // Almacena la velocidad deseada elegida en el menú
     private float velocidadActual = 1.0f;
 
+    // UI de asistencia para instanciación
+    private GameObject mensajePlanoUI;
+    private ARPlaneManager planeManager;
+
     void Awake()
     {
         raycastManager = GetComponent<ARRaycastManager>();
+        planeManager = FindFirstObjectByType<ARPlaneManager>();
 
         // Cargar base de datos centralizada de forma segura
         if (database == null)
@@ -54,8 +60,20 @@ public class PlaceExample : MonoBehaviour
         ActualizarNombreEjercicioUI();
     }
 
+    void OnDisable()
+    {
+        if (mensajePlanoUI != null)
+        {
+            Destroy(mensajePlanoUI);
+            mensajePlanoUI = null;
+        }
+    }
+
     void Update()
     {
+        // Actualizar mensaje de guía de mallas
+        ActualizarMensajePlano();
+
         if (Input.touchCount > 0)
         {
             Touch toque = Input.GetTouch(0);
@@ -90,6 +108,79 @@ public class PlaceExample : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void ActualizarMensajePlano()
+    {
+        if (modeloInstanciado != null)
+        {
+            if (mensajePlanoUI != null)
+            {
+                Destroy(mensajePlanoUI);
+                mensajePlanoUI = null;
+            }
+            return;
+        }
+
+        bool tienePlanos = (planeManager != null && planeManager.trackables.count > 0);
+
+        if (tienePlanos && modeloInstanciado == null)
+        {
+            if (mensajePlanoUI == null)
+            {
+                CrearMensajePlanoUI();
+            }
+        }
+        else
+        {
+            if (mensajePlanoUI != null)
+            {
+                Destroy(mensajePlanoUI);
+                mensajePlanoUI = null;
+            }
+        }
+    }
+
+    private void CrearMensajePlanoUI()
+    {
+        var canvas = FindFirstObjectByType<Canvas>();
+        if (canvas == null) return;
+
+        // Crear contenedor
+        mensajePlanoUI = new GameObject("MensajeInstanciarAR", typeof(RectTransform));
+        mensajePlanoUI.transform.SetParent(canvas.transform, false);
+        
+        var rt = mensajePlanoUI.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.1f, 0.4f);
+        rt.anchorMax = new Vector2(0.9f, 0.6f);
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        // Añadir fondo transparente
+        var img = mensajePlanoUI.AddComponent<Image>();
+        img.color = new Color(0f, 0f, 0f, 0f); // Totalmente transparente
+
+        // Crear Texto
+        var textoGO = new GameObject("TextoMensaje", typeof(RectTransform), typeof(CanvasRenderer));
+        textoGO.transform.SetParent(mensajePlanoUI.transform, false);
+        
+        var rtTexto = textoGO.GetComponent<RectTransform>();
+        rtTexto.anchorMin = Vector2.zero;
+        rtTexto.anchorMax = Vector2.one;
+        rtTexto.offsetMin = Vector2.zero;
+        rtTexto.offsetMax = Vector2.zero;
+
+        var text = textoGO.AddComponent<TMPro.TextMeshProUGUI>();
+        text.text = "Toca la malla para invocar el avatar";
+        text.fontSize = 32f;
+        text.color = Color.white;
+        text.alignment = TMPro.TextAlignmentOptions.Center;
+        text.fontStyle = TMPro.FontStyles.Bold;
+        
+        // Sombra para contraste sobre fondos claros
+        var shadow = textoGO.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
+        shadow.effectDistance = new Vector2(2f, -2f);
     }
 
     // NUEVO: Método Maestro para inyectar la animación y velocidad al muñeco actual
