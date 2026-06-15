@@ -48,6 +48,7 @@ public class AnalisisPostura : MonoBehaviour
     private bool _primerFrame = true;
 
     private float _ultimoLogDiag = 0f;
+    private float _baselineY = -1f;
     private int _framesRecibidos = 0;
     private bool _estabaEnMalaPostura = false; 
     private float _tiempoInicioRep = 0f; // NUEVO: Cronómetro de repetición
@@ -63,6 +64,7 @@ public class AnalisisPostura : MonoBehaviour
     private float _ultimoRepTimeIzq = 0f;
     private Queue<float> _historiaAnguloIzq = new Queue<float>();
     private Queue<float> _historiaAnguloDer = new Queue<float>();
+    private Queue<float> _historiaYCadera = new Queue<float>();
 
     public void ConfigurarEjercicio(TipoSupervision tipo)
     {
@@ -76,6 +78,7 @@ public class AnalisisPostura : MonoBehaviour
         colorFeedback = Color.white;
         tiempoInicio = Time.time;
         tiempoEnPlank = 0f;
+        _baselineY = -1f;
         landmarksActivos.Clear();
         
         advertenciasPostura = 0;
@@ -94,6 +97,7 @@ public class AnalisisPostura : MonoBehaviour
         _ultimoRepTimeIzq = 0f;
         _historiaAnguloIzq.Clear();
         _historiaAnguloDer.Clear();
+        _historiaYCadera.Clear();
 
         switch (tipo)
         {
@@ -118,7 +122,7 @@ public class AnalisisPostura : MonoBehaviour
                 vistaRequerida = VistaRequerida.Frente;
                 break;
             case TipoSupervision.SaltosCruzados:
-                umbralInferior = 0.6f; umbralSuperior = 0.75f; // Ratios normalizados por altura de torso (Calibrado a 0.75)
+                umbralInferior = 0.65f; umbralSuperior = 0.85f; // Ratio distancia tobillos / ancho caderas (permisivo)
                 vistaRequerida = VistaRequerida.Frente;
                 break;
             case TipoSupervision.Burpee:
@@ -707,66 +711,54 @@ public class AnalisisPostura : MonoBehaviour
 
     private void EvaluarSaltosCruzados(IList<NormalizedLandmark> cuerpo, IList<Landmark> cuerpoMundo)
     {
-        landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
-        
+        landmarksActivos = new List<int> { 23, 24, 25, 26, 27, 28 };
+
         // Usar 2D (NormalizedLandmarks) con corrección de aspecto por estabilidad frontal
         float aspect = (float)Screen.width / (float)Screen.height;
-        
-        Vector2 hombroIzq = new Vector2(cuerpo[11].x * aspect, cuerpo[11].y);
-        Vector2 hombroDer = new Vector2(cuerpo[12].x * aspect, cuerpo[12].y);
+
         Vector2 caderaIzq = new Vector2(cuerpo[23].x * aspect, cuerpo[23].y);
         Vector2 caderaDer = new Vector2(cuerpo[24].x * aspect, cuerpo[24].y);
-        Vector2 pieIzq = new Vector2(cuerpo[27].x * aspect, cuerpo[27].y);
-        Vector2 pieDer = new Vector2(cuerpo[28].x * aspect, cuerpo[28].y);
-        Vector2 manoIzq = new Vector2(cuerpo[15].x * aspect, cuerpo[15].y);
-        Vector2 manoDer = new Vector2(cuerpo[16].x * aspect, cuerpo[16].y);
+        Vector2 tobilloIzq = new Vector2(cuerpo[27].x * aspect, cuerpo[27].y);
+        Vector2 tobilloDer = new Vector2(cuerpo[28].x * aspect, cuerpo[28].y);
 
-        float alturaTorso = (Vector2.Distance(hombroIzq, caderaIzq) + Vector2.Distance(hombroDer, caderaDer)) / 2f;
-        if (alturaTorso < 0.05f) alturaTorso = 0.3f;
+        // Señal principal: distancia horizontal entre tobillos normalizada por ancho de caderas
+        // Cuando los pies se cruzan, la distancia se reduce; cuando se abren, crece
+        float anchoCaderas = Mathf.Abs(caderaIzq.x - caderaDer.x);
+        if (anchoCaderas < 0.02f) anchoCaderas = 0.1f;
 
-        float distManos = Vector2.Distance(manoIzq, manoDer);
-        float distPies = Vector2.Distance(pieIzq, pieDer);
+        float distTobillos = Mathf.Abs(tobilloIzq.x - tobilloDer.x);
+        float ratioPies = distTobillos / anchoCaderas;
 
-        float ratioManos = distManos / alturaTorso;
-        float ratioPies = distPies / alturaTorso;
+        bool piesCruzados = ratioPies < umbralInferior;  // Pies juntos o cruzados (< 0.5)
+        bool piesAbiertos = ratioPies > umbralSuperior;  // Pies claramente separados (> 1.0)
 
-        bool manosAbiertas = ratioManos > 1.3f;   // ~1.3x torso
-        bool manosCruzadas = ratioManos < 0.5f;   // ~0.5x torso
-
-        bool piesAbiertos = ratioPies > 0.75f;     // ~0.75x torso (más permisivo)
-        bool piesCruzados = ratioPies < 0.6f;      // ~0.6x torso (más fácil de cruzar/cerrar)
-
-        // Barra de progreso y HUD
+        // Barra de progreso y HUD (suavizado)
         if (_primerFrame) anguloSuavizado = ratioPies;
         else anguloSuavizado = Mathf.Lerp(anguloSuavizado, ratioPies, SUAVIZADO);
-        progreso = Mathf.Clamp01(Mathf.InverseLerp(umbralInferior, umbralSuperior, anguloSuavizado));
-        anguloActual = progreso * 100f; // Escala para mostrar en UI (0%-100%)
-
-        // Eje Y en 2D es positivo hacia abajo: manosMuyAltas si Y es menor (arriba) que hombro - offset
-        bool manosMuyAltas = manoIzq.y < (hombroIzq.y - 0.25f * alturaTorso) && 
-                             manoDer.y < (hombroDer.y - 0.25f * alturaTorso);
+        progreso = Mathf.Clamp01(Mathf.InverseLerp(umbralSuperior, umbralInferior, anguloSuavizado));
+        anguloActual = progreso * 100f; // 0% pies abiertos, 100% pies cruzados
 
         switch (faseActual)
         {
-            case FaseRep.Inicio:
-                if (manosAbiertas && piesAbiertos)
+            case FaseRep.Inicio: // Esperando que las piernas se abran
+                if (piesAbiertos)
                 {
                     faseActual = FaseRep.Bajando;
                     _tiempoInicioRep = Time.time;
                 }
                 break;
 
-            case FaseRep.Bajando:
-                if (manosCruzadas && piesCruzados)
+            case FaseRep.Bajando: // Piernas abiertas, esperando que se crucen
+                if (piesCruzados)
                 {
                     faseActual = FaseRep.Completado;
                     repeticiones++;
 
                     float duracionRep = Time.time - _tiempoInicioRep;
-                    if (duracionRep < 0.6f)
+                    if (duracionRep < 0.3f)
                     {
                         repeticionesRapidas++;
-                        erroresCometidos.Add("Ritmo de salto cruzado muy rápido");
+                        erroresCometidos.Add("Ritmo de salto muy rápido");
                     }
 
                     OnRepCompletada?.Invoke();
@@ -775,30 +767,18 @@ public class AnalisisPostura : MonoBehaviour
                 break;
         }
 
-        if (manosMuyAltas)
-        {
-            feedback = "Mantén los brazos a la altura de los hombros";
-            colorFeedback = Color.yellow;
-        }
-        else if (manosAbiertas && piesAbiertos)
-        {
-            feedback = "¡Buen salto abierto!"; colorFeedback = Color.green;
-        }
-        else if (manosCruzadas && piesCruzados)
+        // Feedback visual
+        if (piesCruzados)
         {
             feedback = "¡Buen cruce!"; colorFeedback = Color.green;
         }
-        else if (manosAbiertas && !piesAbiertos)
+        else if (piesAbiertos)
         {
-            feedback = "Abre más las piernas"; colorFeedback = Color.yellow;
-        }
-        else if (!manosAbiertas && piesAbiertos)
-        {
-            feedback = "Abre bien los brazos a los lados"; colorFeedback = Color.yellow;
+            feedback = "Piernas abiertas — ¡Salta y cruza!"; colorFeedback = Color.white;
         }
         else
         {
-            feedback = "Cruzando..."; colorFeedback = Color.cyan;
+            feedback = "Saltando..."; colorFeedback = Color.cyan;
         }
     }
 
