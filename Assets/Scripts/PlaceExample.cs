@@ -308,7 +308,6 @@ public class PlaceExample : MonoBehaviour
         }
     }
 
-    // ESCUDO ANDROID
     private bool FallaSeguraTocoUI(Vector2 posicionTacto)
     {
         if (EventSystem.current == null) return false;

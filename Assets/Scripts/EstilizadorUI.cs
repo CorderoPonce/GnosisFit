@@ -215,62 +215,50 @@ public class EstilizadorUI : MonoBehaviour
             }
         }
 
-        // 4. Reposicionar Botón Cámara en el centro de la pantalla abajo (HUD estándar)
+        // 4. Reposicionar Botón Cámara como "Corregir Postura" en la esquina inferior izquierda (simétrico al Chatbot AI)
         if (btnCamara != null)
         {
-            btnCamara.SetActive(true); // Activar para que se muestre y sea clickeable
+            btnCamara.SetActive(true);
             btnCamara.transform.SetParent(canvasTransform, true);
             var rt = btnCamara.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0);
-            rt.anchorMax = new Vector2(0.5f, 0);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(156, 156); // 30% más grande
-            rt.anchoredPosition = new Vector2(0, 143);
+            rt.anchorMin = new Vector2(0, 0);
+            rt.anchorMax = new Vector2(0, 0);
+            rt.pivot = new Vector2(0, 0);
+            rt.sizeDelta = new Vector2(370, 98); // Mismo alto que Chatbot AI
+            rt.anchoredPosition = new Vector2(50, 65); // Simétrico al Chatbot AI (derecha: -50)
 
-            // Estilo circular oscuro translúcido
+            // Estilo cápsula naranja redondeada (color BTN_POSTURE del menú principal)
             Image img = btnCamara.GetComponent<Image>();
-            Sprite originalCameraSprite = null;
             if (img != null)
             {
-                originalCameraSprite = img.sprite; // Guardar el icono de cámara original
-                img.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/Knob.psd");
-                img.type = Image.Type.Simple;
-                img.color = new Color(0.12f, 0.15f, 0.18f, 0.6f);
+                img.sprite = whiteRoundedSprite;
+                img.type = Image.Type.Sliced;
+                img.color = new Color(0.85f, 0.45f, 0.15f, 1f); // BTN_POSTURE del menú
             }
 
-            // Si guardamos el icono de la cámara original, crear un GameObject hijo para mostrarlo
-            if (originalCameraSprite != null)
+            // Sombra flotante (igual que Chatbot AI)
+            var shadow = btnCamara.GetComponent<Shadow>();
+            if (shadow == null) shadow = btnCamara.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.12f);
+            shadow.effectDistance = new Vector2(0f, -5f);
+
+            // Eliminar iconos de cámara hijos que ya no se necesitan
+            foreach (Transform child in btnCamara.transform)
             {
-                Transform existingIcon = btnCamara.transform.Find("CameraIconProcedural");
-                GameObject iconGO;
-                if (existingIcon != null)
-                {
-                    iconGO = existingIcon.gameObject;
-                }
-                else
-                {
-                    iconGO = new GameObject("CameraIconProcedural", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-                    iconGO.transform.SetParent(btnCamara.transform, false);
-                }
-
-                RectTransform iconRT = iconGO.GetComponent<RectTransform>();
-                iconRT.anchorMin = Vector2.zero;
-                iconRT.anchorMax = Vector2.one;
-                iconRT.sizeDelta = new Vector2(-52, -52); // Proporcional
-                iconRT.anchoredPosition = Vector2.zero;
-
-                Image iconImg = iconGO.GetComponent<Image>();
-                iconImg.sprite = originalCameraSprite;
-                iconImg.color = COLOR_BOTON_ACTIVO; // Cian
-                iconImg.raycastTarget = false;
+                Destroy(child.gameObject);
             }
 
-            // Cambiar iconos/dibujos del botón de cámara a color cian
-            foreach (Image i in btnCamara.GetComponentsInChildren<Image>(true))
-            {
-                if (i.gameObject != btnCamara && i.name != "CameraIconProcedural") 
-                    i.color = COLOR_BOTON_ACTIVO;
-            }
+            // Texto "Corregir Postura"
+            var txtGO = new GameObject("TextoPostura", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            txtGO.transform.SetParent(btnCamara.transform, false);
+            Stretch(txtGO);
+
+            var tmp = txtGO.GetComponent<TextMeshProUGUI>();
+            tmp.text = "Corregir Postura";
+            tmp.color = Color.white;
+            tmp.fontSize = 32f;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.alignment = TextAlignmentOptions.Center;
 
             // Configurar onClick para ir a SupervisionMode sincronizando datos, como hace GestorModoSupervision
             Button btnComponentCam = btnCamara.GetComponent<Button>();

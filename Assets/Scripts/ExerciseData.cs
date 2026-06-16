@@ -10,6 +10,7 @@ public enum TipoSupervision
     Burpee,
     Plank,
     SaltosCruzados,
+    CaminataPike,
     Generic // Sin análisis específico
 }
 
@@ -63,7 +64,7 @@ public class ExerciseData
             new ExerciseData("Jumping Jacks",       "Todos",   "Baja",  9,  TipoSupervision.JumpingJack, new Vector3(0f, 0.9f, 1.8f), new Vector3(0f, 0.75f, 0f), 45f),
 
             // Flexiones / Pecho en el suelo (PushUps)
-            new ExerciseData("Caminata Pike",       "Pecho",   "Alta",  11, TipoSupervision.PushUp, new Vector3(0f, 0.45f, 1.8f), new Vector3(0f, 0.25f, 0f), 45f),
+            new ExerciseData("Caminata Pike",       "Pecho",   "Alta",  11, TipoSupervision.CaminataPike, new Vector3(0f, 0.45f, 1.8f), new Vector3(0f, 0.25f, 0f), 45f),
             new ExerciseData("Flexiones de Brazo",  "Pecho",   "Media", 12, TipoSupervision.PushUp, new Vector3(0f, 0.45f, 1.8f), new Vector3(0f, 0.25f, 0f), 45f),
 
             // Abdominales (Situps - Crunches y Abdominales)

@@ -49,6 +49,7 @@ public class AnalisisPostura : MonoBehaviour
 
     private float _ultimoLogDiag = 0f;
     private float _baselineY = -1f;
+    private float _centroX = -1f;
     private int _framesRecibidos = 0;
     private bool _estabaEnMalaPostura = false; 
     private float _tiempoInicioRep = 0f; // NUEVO: Cronómetro de repetición
@@ -79,6 +80,7 @@ public class AnalisisPostura : MonoBehaviour
         tiempoInicio = Time.time;
         tiempoEnPlank = 0f;
         _baselineY = -1f;
+        _centroX = -1f;
         landmarksActivos.Clear();
         
         advertenciasPostura = 0;
@@ -122,8 +124,12 @@ public class AnalisisPostura : MonoBehaviour
                 vistaRequerida = VistaRequerida.Frente;
                 break;
             case TipoSupervision.SaltosCruzados:
-                umbralInferior = 0.65f; umbralSuperior = 0.85f; // Ratio distancia tobillos / ancho caderas (permisivo)
+                umbralInferior = 0.15f; umbralSuperior = 0.35f; // Ratio desplazamiento lateral / altura torso (2D con aspecto)
                 vistaRequerida = VistaRequerida.Frente;
+                break;
+            case TipoSupervision.CaminataPike:
+                umbralInferior = 110f; umbralSuperior = 145f; // Ángulo de cadera (Pike Walk: 145° plancha, <110° en pica)
+                vistaRequerida = VistaRequerida.Perfil;
                 break;
             case TipoSupervision.Burpee:
                 umbralInferior = 100f; umbralSuperior = 145f;
@@ -204,6 +210,7 @@ public class AnalisisPostura : MonoBehaviour
             case TipoSupervision.Burpee:       EvaluarBurpee(cuerpo, cuerpoMundo);       break;
             case TipoSupervision.Plank:        EvaluarPlank(cuerpo, cuerpoMundo);        break;
             case TipoSupervision.SaltosCruzados: EvaluarSaltosCruzados(cuerpo, cuerpoMundo); break;
+            case TipoSupervision.CaminataPike: EvaluarCaminataPike(cuerpo, cuerpoMundo); break;
             default:                           EvaluarGeneric();            break;
         }
 
@@ -265,6 +272,7 @@ public class AnalisisPostura : MonoBehaviour
                 }
                 break;
             case TipoSupervision.PushUp:
+            case TipoSupervision.CaminataPike:
                 {
                     float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[13].visibility ?? 0f) + (cuerpo[15].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 5f;
                     float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[14].visibility ?? 0f) + (cuerpo[16].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 5f;
@@ -276,13 +284,23 @@ public class AnalisisPostura : MonoBehaviour
                 }
                 break;
             case TipoSupervision.JumpingJack:
-            case TipoSupervision.SaltosCruzados:
                 {
                     float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[13].visibility ?? 0f) + (cuerpo[15].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[25].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 6f;
                     float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[14].visibility ?? 0f) + (cuerpo[16].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[26].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 6f;
                     if (confIzq < 0.25f || confDer < 0.25f)
                     {
                         msjFeedback = "Ajusta tu posición — mantén pies y manos a la vista";
+                        return false;
+                    }
+                }
+                break;
+            case TipoSupervision.SaltosCruzados:
+                {
+                    float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f)) / 2f;
+                    float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f)) / 2f;
+                    if (confIzq < 0.25f || confDer < 0.25f)
+                    {
+                        msjFeedback = "Ajusta tu posición — mantén tu torso a la vista";
                         return false;
                     }
                 }
@@ -622,6 +640,52 @@ public class AnalisisPostura : MonoBehaviour
         }
     }
 
+    private void EvaluarCaminataPike(IList<NormalizedLandmark> cuerpo, IList<Landmark> cuerpoMundo)
+    {
+        landmarksActivos = new List<int> { 11, 12, 23, 24, 27, 28 };
+
+        // Lado más visible (mayor confianza) en perfil
+        float confDer = ((cuerpo[12].visibility ?? 0f) + (cuerpo[24].visibility ?? 0f) + (cuerpo[28].visibility ?? 0f)) / 3f;
+        float confIzq = ((cuerpo[11].visibility ?? 0f) + (cuerpo[23].visibility ?? 0f) + (cuerpo[27].visibility ?? 0f)) / 3f;
+        bool usarDerecho = confDer > confIzq;
+
+        int idxShoulder = usarDerecho ? 12 : 11;
+        int idxHip = usarDerecho ? 24 : 23;
+        int idxAnkle = usarDerecho ? 28 : 27;
+
+        // Medir el ángulo de la cadera (hombro - cadera - tobillo)
+        float anguloCadera = CalcularAngulo3D(LMMundo(cuerpoMundo, idxShoulder), LMMundo(cuerpoMundo, idxHip), LMMundo(cuerpoMundo, idxAnkle));
+
+        ProcesarRepConAngulo(anguloCadera);
+
+        if (faseActual == FaseRep.Inicio)
+        {
+            if (anguloSuavizado > umbralSuperior) 
+            { 
+                feedback = "Plancha alta — ¡Camina los pies hacia tus manos!"; 
+                colorFeedback = Color.white; 
+            }
+            else 
+            { 
+                feedback = "Camina hacia tus manos elevando la cadera"; 
+                colorFeedback = Color.cyan; 
+            }
+        }
+        else // FaseRep.Bajando (volviendo a la plancha)
+        {
+            if (anguloSuavizado < umbralInferior) 
+            { 
+                feedback = "¡Excelente posición pike! Regresa a plancha"; 
+                colorFeedback = Color.green; 
+            }
+            else 
+            { 
+                feedback = "Camina las piernas hacia atrás lentamente"; 
+                colorFeedback = Color.cyan; 
+            }
+        }
+    }
+
     private void EvaluarJumpingJack(IList<NormalizedLandmark> cuerpo, IList<Landmark> cuerpoMundo)
     {
         landmarksActivos = new List<int> { 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28 };
@@ -711,45 +775,69 @@ public class AnalisisPostura : MonoBehaviour
 
     private void EvaluarSaltosCruzados(IList<NormalizedLandmark> cuerpo, IList<Landmark> cuerpoMundo)
     {
-        landmarksActivos = new List<int> { 23, 24, 25, 26, 27, 28 };
+        landmarksActivos = new List<int> { 11, 12, 23, 24, 25, 26, 27, 28 };
 
-        // Usar 2D (NormalizedLandmarks) con corrección de aspecto por estabilidad frontal
         float aspect = (float)Screen.width / (float)Screen.height;
-
+        
+        Vector2 hombroIzq = new Vector2(cuerpo[11].x * aspect, cuerpo[11].y);
+        Vector2 hombroDer = new Vector2(cuerpo[12].x * aspect, cuerpo[12].y);
         Vector2 caderaIzq = new Vector2(cuerpo[23].x * aspect, cuerpo[23].y);
         Vector2 caderaDer = new Vector2(cuerpo[24].x * aspect, cuerpo[24].y);
-        Vector2 tobilloIzq = new Vector2(cuerpo[27].x * aspect, cuerpo[27].y);
-        Vector2 tobilloDer = new Vector2(cuerpo[28].x * aspect, cuerpo[28].y);
 
-        // Señal principal: distancia horizontal entre tobillos normalizada por ancho de caderas
-        // Cuando los pies se cruzan, la distancia se reduce; cuando se abren, crece
-        float anchoCaderas = Mathf.Abs(caderaIzq.x - caderaDer.x);
-        if (anchoCaderas < 0.02f) anchoCaderas = 0.1f;
+        float alturaTorso = (Vector2.Distance(hombroIzq, caderaIzq) + Vector2.Distance(hombroDer, caderaDer)) / 2f;
+        if (alturaTorso < 0.05f) alturaTorso = 0.3f;
 
-        float distTobillos = Mathf.Abs(tobilloIzq.x - tobilloDer.x);
-        float ratioPies = distTobillos / anchoCaderas;
+        float hipCenterX = ((cuerpo[23].x + cuerpo[24].x) / 2f) * aspect;
 
-        bool piesCruzados = ratioPies < umbralInferior;  // Pies juntos o cruzados (< 0.5)
-        bool piesAbiertos = ratioPies > umbralSuperior;  // Pies claramente separados (> 1.0)
+        // Inicializar o actualizar el centro de referencia horizontal de forma suavizada
+        if (_primerFrame || _centroX < 0f)
+        {
+            _centroX = hipCenterX;
+        }
+        else
+        {
+            // Filtro lento para compensar desplazamientos lentos pero ignorar saltos rápidos
+            _centroX = Mathf.Lerp(_centroX, hipCenterX, 0.01f);
+        }
+
+        float deltaX = hipCenterX - _centroX;
+        float ratioDesplazamiento = deltaX / alturaTorso;
+        float absRatio = Mathf.Abs(ratioDesplazamiento);
+
+        bool desplazadoLado = absRatio > umbralSuperior;
+        bool enCentro = absRatio < umbralInferior;
 
         // Barra de progreso y HUD (suavizado)
-        if (_primerFrame) anguloSuavizado = ratioPies;
-        else anguloSuavizado = Mathf.Lerp(anguloSuavizado, ratioPies, SUAVIZADO);
-        progreso = Mathf.Clamp01(Mathf.InverseLerp(umbralSuperior, umbralInferior, anguloSuavizado));
-        anguloActual = progreso * 100f; // 0% pies abiertos, 100% pies cruzados
+        if (_primerFrame) anguloSuavizado = absRatio;
+        else anguloSuavizado = Mathf.Lerp(anguloSuavizado, absRatio, SUAVIZADO);
+
+        if (faseActual == FaseRep.Inicio)
+        {
+            progreso = Mathf.Clamp01(Mathf.InverseLerp(0f, umbralSuperior, anguloSuavizado));
+            feedback = "Salta lateralmente a la izquierda o derecha";
+            colorFeedback = Color.white;
+        }
+        else // FaseRep.Bajando (volviendo al centro)
+        {
+            progreso = Mathf.Clamp01(Mathf.InverseLerp(umbralSuperior, umbralInferior, anguloSuavizado));
+            feedback = "¡Buen salto! Vuelve al centro";
+            colorFeedback = Color.green;
+        }
+
+        anguloActual = progreso * 100f; // Mostrar porcentaje en la UI
 
         switch (faseActual)
         {
-            case FaseRep.Inicio: // Esperando que las piernas se abran
-                if (piesAbiertos)
+            case FaseRep.Inicio: // Esperando el salto lateral
+                if (desplazadoLado)
                 {
                     faseActual = FaseRep.Bajando;
                     _tiempoInicioRep = Time.time;
                 }
                 break;
 
-            case FaseRep.Bajando: // Piernas abiertas, esperando que se crucen
-                if (piesCruzados)
+            case FaseRep.Bajando: // Esperando el retorno al centro
+                if (enCentro)
                 {
                     faseActual = FaseRep.Completado;
                     repeticiones++;
@@ -765,20 +853,6 @@ public class AnalisisPostura : MonoBehaviour
                     faseActual = FaseRep.Inicio;
                 }
                 break;
-        }
-
-        // Feedback visual
-        if (piesCruzados)
-        {
-            feedback = "¡Buen cruce!"; colorFeedback = Color.green;
-        }
-        else if (piesAbiertos)
-        {
-            feedback = "Piernas abiertas — ¡Salta y cruza!"; colorFeedback = Color.white;
-        }
-        else
-        {
-            feedback = "Saltando..."; colorFeedback = Color.cyan;
         }
     }
 
